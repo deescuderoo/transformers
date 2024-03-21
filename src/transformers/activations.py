@@ -19,10 +19,39 @@ import torch
 from packaging import version
 from torch import Tensor, nn
 
+from .approximations import approx_less_than
+
 from .utils import logging
 
 
 logger = logging.get_logger(__name__)
+
+SCALE = 200
+
+
+class PumaGELUActivation(nn.Module):
+    """
+    Implementation of the GELU activation from the Puma paper https://arxiv.org/pdf/2307.12533.pdf
+    """
+
+    def forward(self, input: Tensor) -> Tensor:
+        def f_0(x):
+            return -0.011034134030615728*pow(x, 3) - 0.11807612951181953 *\
+                pow(x, 2) - 0.42226581151983866 * x - 0.5054031199708174
+
+        def f_1(x):
+            return 0.0018067462606141187*pow(x, 6) - 0.037688200365904236 *\
+                pow(x, 4) + 0.3603292692789629 * pow(x, 2) + 0.5*x +\
+                0.008526321541038084
+
+        scaled_input = input / SCALE
+
+        res = approx_less_than(scaled_input, -4/SCALE) * (-f_0(input))\
+            + approx_less_than(scaled_input, -1.95/SCALE)*(f_0(input) - f_1(input)) \
+            + approx_less_than(scaled_input, 3/SCALE)*(f_1(input)) \
+            + approx_less_than(3/SCALE, scaled_input)*(input)
+
+        return res
 
 
 class PytorchGELUTanh(nn.Module):
@@ -198,6 +227,7 @@ class ClassInstantier(OrderedDict):
 
 
 ACT2CLS = {
+    "gelu_puma": PumaGELUActivation,
     "gelu": GELUActivation,
     "gelu_10": (ClippedGELUActivation, {"min": -10, "max": 10}),
     "gelu_fast": FastGELUActivation,
