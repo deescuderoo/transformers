@@ -1,12 +1,13 @@
 from transformers import GPT2Config, GPT2Model, GPT2Tokenizer, GPT2LMHeadModel
 from transformers import pipeline, set_seed
 from transformers import activations
+from torch import nn
 
 # Initializing a GPT2 configuration
 
 configuration = GPT2Config()
 
-# Initializing a model (with random weights) from the configuration
+# Initializing a model
 
 # model = GPT2Model(configuration)
 # model = GPT2LMHeadModel(configuration)
@@ -22,66 +23,41 @@ the next token in the sequence.
 
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
+# CHANGING ACTIVATIONS
+# This is the easiest one: one can instantiate a pretrained model and
+# ask the loader to change the activation function. The "gelu_puma"
+# name was added to the file
+# /home/paz/Code/transformers/src/transformers/activations.py See that
+# file for details
 
-# Now we modify the config
-
-# config = model.config
-# new_relu = activations.PumaGELUActivation()
-
-# for layer in model.transformer.h:
-#     layer.set_activation_fn(new_relu)
-
-my_config = GPT2Config.from_pretrained("gpt2", activation_function="gelu_puma")    
+my_config = GPT2Config.from_pretrained("gpt2", activation_function="gelu_puma")
 my_model = GPT2LMHeadModel.from_pretrained("gpt2", config=my_config)
 
-text = "Create a poem."
-input_ids = tokenizer(text, return_tensors='pt')
-my_output = my_model.generate(
-    **input_ids,
-    max_length=100,
-    num_return_sequences=1,
-    do_sample=True,
-    top_k=50,
-    top_p=0.95,
-    early_stopping=True
-)
-output = model.generate(
-    **input_ids,
-    max_length=100,
-    num_return_sequences=1,
-    do_sample=True,
-    top_k=50,
-    top_p=0.95,
-    early_stopping=True
-)
-my_generated_text = tokenizer.decode(my_output[0], skip_special_tokens=True)
-generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
+# CHANGING LAYER NORMALIZATION
+
+# First, we define the new layer normalization as a derived class from
+# nn.Module
+
+class NewLayerNorm(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        return x
+
+# Now, we modify the blocks in the transformer. With my_model.transfomer.h we access the hidden architecture, which is a ModuleList with the two layers that comprise the feed forward block of the architecture.
+
+for block in my_model.transformer.h:
+    print(block.ln_1)
+    block.ln_1 = NewLayerNorm()
+    block.ln_2 = NewLayerNorm()
+# nn.LayerNorm(block.ln_1.normalized_shape)
+
+# CHANGING SOFTMAX (TODO)
 
 
-print(my_generated_text)
-print(generated_text)
 
-# Let's test!
+# Save the model
 
-from datasets import load_metric, load_dataset
-from evaluate import TextClassificationEvaluator
-from transformers import TextClassificationPipeline
-
-# # dataset = load_dataset('wikitext', 'wikitext-103-raw-v1')
-# dataset = load_dataset("imdb", split="test").shuffle().select(range(1000))
-
-# text_classification_pipeline = TextClassificationPipeline(model=my_model, tokenizer=tokenizer)
-
-# evaluator = TextClassificationEvaluator(
-#     task_name="text-classification",
-#     data_args=None,
-#     metric_name="accuracy",
-#     predictions=text_classification_pipeline(dataset["test"]["text"]),
-#     label_list=dataset["test"]["labels"]
-# )
-
-# score = evaluator.evaluate()
-# print(f"Accuracy: {score['accuracy']}")
-
-my_model.save_pretrained("./gpt2-puma")
-tokenizer.save_pretrained("./gpt2-puma")
+my_model.save_pretrained("./gpt2-custom")
+tokenizer.save_pretrained("./gpt2-custom")

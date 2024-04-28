@@ -59,3 +59,7 @@ def approx_less_than(x, t):
     res, d = approx_compare(t-x) 
     # print(d)
     return (res + 1)/2
+
+
+def approx_inverse_sqrt(x):
+    return 1/np.sqrt(x)
