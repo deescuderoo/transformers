@@ -4,6 +4,8 @@ from transformers import activations
 import torch
 from torch import nn
 import numpy as np
+from transformers import GPT2LMHeadModelNew
+
 
 # Initializing a GPT2 configuration
 
@@ -22,6 +24,7 @@ the next token in the sequence.
 '''
 
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+
 
 # CHANGING ACTIVATIONS
 # This is the easiest one: one can instantiate a pretrained model and
@@ -116,6 +119,7 @@ def ref_inv_sqrt(x):
     '''
     return 1/np.sqrt(x)
 
+
 class NewLayerNorm(nn.Module):
     def __init__(self, old_ln):
         super().__init__()
@@ -159,11 +163,16 @@ for block in new_model.transformer.h:
     block.ln_1 = NewLayerNorm(block.ln_1)
     block.ln_2 = NewLayerNorm(block.ln_2)
 
+
+sm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
+
+
 # std_model: standard model from HF
 # puma_model: Puma using PyTorch's LN
 # ref_model: Puma while keeping LN intact, except we use our reference
 # implementation instead of PyTorch's
 # new_model: Puma while changing LN to use the approximation
+# sm_model: Puma, LN intact, approx softmax
 
 # CHANGING SOFTMAX (TODO)
 
@@ -175,23 +184,29 @@ std_model.eval()
 puma_model.eval()
 ref_model.eval()
 new_model.eval()
+sm_model.eval()
 
 prompt_text = "The secret for success is"
 
 # Tokenize the prompt text
 input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
 
-# Generate text
+# Generate and decode text
 # std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-
-# Decode and print the generated text
 # std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
-# puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
+
+sm_output = sm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+sm_generated_text = tokenizer.decode(sm_output[0], skip_special_tokens=True)
+
+puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
+
+# ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 # ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
-new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+
+# new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+
 
 
 # The below was useful for finding the range of LN:
@@ -202,3 +217,5 @@ new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
 # Save the model
 # new_model.save_pretrained("./gpt2-custom")
 # tokenizer.save_pretrained("./gpt2-custom")
+
+

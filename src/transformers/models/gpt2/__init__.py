@@ -57,6 +57,11 @@ else:
         "load_tf_weights_in_gpt2",
     ]
 
+    _import_structure["modeling_gpt2_new_softmax"] = [
+        "GPT2LMHeadModelNew",
+    ]
+
+
 try:
     if not is_tf_available():
         raise OptionalDependencyNotAvailable()

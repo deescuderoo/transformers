@@ -1,5 +1,6 @@
 from math import ceil, tanh, log2, sqrt, pi
 import scipy.special
+import torch
 
 def compare_f(x, n):
     res = 0
@@ -61,5 +62,41 @@ def approx_less_than(x, t):
     return (res + 1)/2
 
 
-def approx_inverse_sqrt(x):
-    return 1/np.sqrt(x)
+# SOFTMAX
+
+
+def approx_exp(x):
+    PARAM_R = 6
+    output = (1 + (x/(2**PARAM_R)))**(2**PARAM_R)
+    # Set output of -inf entries to 0
+    # -inf is sometimes (always?) equal to -3.4028e+38
+    output[x <= -3.4028e+38] = 0
+    return output
+
+
+def ref_softmax(x, dim=None):
+    maxes = torch.max(x, dim, keepdim=True)[0]
+
+    x_exp = torch.exp(x-maxes)
+    x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
+    return x_exp/x_exp_sum
+
+
+def approx_softmax(x, dim=None):
+    # print(f"max:\n{x.max()}")
+    maxes = torch.max(x, dim, keepdim=True)[0]
+
+    # For debugging
+    if not torch.all(x-maxes <= 0):
+        print(f"error:\n{(approx_exp(x-maxes) - torch.exp(x-maxes)).abs().max()}")
+        print(f"input:\n{x-maxes}")
+        print(f"real:\n{torch.exp(x-maxes)}")
+        print(f"approx:\n{approx_exp(x-maxes)}")
+        print("-----------------------------------------\n")
+        raise RuntimeError
+
+    x_exp = approx_exp(x-maxes)
+    # x_exp = torch.exp(x-maxes)
+
+    x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
+    return x_exp/x_exp_sum
