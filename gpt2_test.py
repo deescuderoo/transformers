@@ -9,11 +9,9 @@ import numpy as np
 
 configuration = GPT2Config()
 
-# Initializing a model
+# This is the default GPT2 model from HF
+std_model = GPT2LMHeadModel.from_pretrained('gpt2')
 
-# model = GPT2Model(configuration)
-# model = GPT2LMHeadModel(configuration)
-model = GPT2LMHeadModel.from_pretrained('gpt2')
 '''
 The GPT2LMHeadModel class is a subclass of GPT2 that includes a
 language modeling head on top of the base GPT-2 model. This language
@@ -29,41 +27,26 @@ tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 # This is the easiest one: one can instantiate a pretrained model and
 # ask the loader to change the activation function. The "gelu_puma"
 # name was added to the file
-# /home/paz/Code/transformers/src/transformers/activations.py See that
-# file for details
+# ./src/transformers/activations.py See that file for details
 
-my_config = GPT2Config.from_pretrained("gpt2", activation_function="gelu_puma")
-my_model = GPT2LMHeadModel.from_pretrained("gpt2", config=my_config)
+new_config = GPT2Config.from_pretrained("gpt2", activation_function="gelu_puma")
+puma_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
 
 # CHANGING LAYER NORMALIZATION
 
 # First, we define the new layer normalization as a derived class from
 # nn.Module
 
-# def approx_ln(x):
-#     return y
-
-# Resources that helped me with the implementation of LN:
-# https://stackoverflow.com/questions/59830168/layer-normalization-in-pytorch
-
-
-def initial_inv_sqrt(x, interval_start, interval_end):
-    center = (interval_start + interval_end)/2 + 1
-    sq = np.sqrt(center)
-    y = 1/sq - (x-center)/(2*sq**3) \
-        + (3 * (x-center)**2) / (8*sq**5) \
-        - (5 * (x-center)**3) / (16*sq**7)
-    return y
-
-
-def newton_inv_sqrt(x, iterations, interval_start, interval_end):
-    y = initial_inv_sqrt(x, interval_start, interval_end)
-    for i in range(iterations):
-        y = (y * (3 - x * y**2)) / 2
-    return y
-
 
 class RefLayerNorm(nn.Module):
+    '''
+    Mimics the LayerNorm from PyTorch exactly. This was useful as a
+    starting point for the approximation
+    '''
+    # Statics, used for finding ranges
+    min_list = []
+    max_list = []
+
     def __init__(self, old_ln):
         super().__init__()
         self.weights = old_ln.weight
@@ -72,13 +55,66 @@ class RefLayerNorm(nn.Module):
 
     def forward(self, x):
         length = x.shape[-1]
-        mean = x.mean(-1, keepdim = True)
-        diff = x - mean
+        mean = x.mean(-1, keepdim=True)
 
-        var = (diff**2).sum(-1, keepdim = True) / length
-        y = (diff / torch.sqrt( var + self.eps )) * self.weights + self.bias
+        # This is the ref (with the help of torch)
+        # https://stackoverflow.com/questions/59830168/layer-normalization-in-pytorch
+        # var = x.var(-1, keepdim = True, correction=0)
+        # sqrt_input = var + self.eps
+        # y = (x-mean)/torch.sqrt(sqrt_input) * self.weights + self.bias
+
+
+        # This is the ref (manually)
+        diff = x - mean
+        var = (diff**2).sum(-1, keepdim=True) / length
+        sqrt_input = var + self.eps
+        y = (diff / torch.sqrt(sqrt_input)) * self.weights + self.bias
+
+        # This is the rewrite from the non-interactive paper
+        # z = length * (x - mean)
+        # sqrt_input = (z**2).sum(-1, keepdim = True) + self.eps * length**3
+        # y = np.sqrt(length) * (z / torch.sqrt(sqrt_input)) * self.weights + self.bias
+
+        # Useful for finding ranges
+        RefLayerNorm.min_list.append(sqrt_input.min())
+        RefLayerNorm.max_list.append(sqrt_input.max())
         return y
 
+
+def initial_inv_sqrt(x):
+    '''
+    Using Taylor to find the starting point for Newton's approximation
+    of 1/sqrt(x)
+    '''
+    # Ranges found empirically using RefLayerNorm
+    RANGE_START = 0
+    RANGE_END = 100
+    center = (RANGE_START + RANGE_END)/2 + 1
+    sq = np.sqrt(center)
+    y = 1/sq - (x-center) / (2 * sq**3) \
+        + (3 * (x-center)**2) / (8 * sq**5) \
+        - (5 * (x-center)**3) / (16 * sq**7)
+    return y
+
+
+def newton_inv_sqrt(x):
+    '''
+    Newton approximation for 1/sqrt(x)
+    '''
+    NEWTON_ITERATIONS = 20
+    # Initial estimate
+    y = initial_inv_sqrt(x)
+    # Iterations
+    for _ in range(NEWTON_ITERATIONS):
+        y = (y * (3 - x * y**2)) / 2
+    return y
+
+
+def ref_inv_sqrt(x):
+    '''
+    Reference implementation of 1/sqrt(x) for comparison
+    '''
+    return 1/np.sqrt(x)
 
 class NewLayerNorm(nn.Module):
     def __init__(self, old_ln):
@@ -88,41 +124,81 @@ class NewLayerNorm(nn.Module):
         self.eps = old_ln.eps
 
     def forward(self, x):
+        # Scales the variance down by SCALE_ROOT^2. Important to fit
+        # in the required range
+        SCALE_ROOT = 10
+
         length = x.shape[-1]
-        mean = x.mean(-1, keepdim = True)
-        z = length * (x - mean)
-        y = np.sqrt(length) * (z / torch.sqrt((z**2).sum(-1, keepdim = True) + self.eps * length**3 )) * self.weights + self.bias
+        mean = x.mean(-1, keepdim=True)
+
+        diff = x - mean
+        var = (diff**2).sum(-1, keepdim=True) / length
+        sqrt_input = (var + self.eps) / SCALE_ROOT**2
+
+        newton = newton_inv_sqrt(sqrt_input)
+        ref = ref_inv_sqrt(sqrt_input)
+
+        y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
+
         return y
 
-# let us test w.r.t. torch's LN
 
-batch_size = 2
-seq_len = 5
-hidden_size = 10
-x = torch.randn(batch_size, seq_len, hidden_size)
+# Now, we modify the blocks in the transformer. With
+# model.transfomer.h we access the hidden architecture,
+# which is a ModuleList with the two layers that comprise
+# the feed forward block of the architecture.
 
-LN = torch.nn.LayerNorm(normalized_shape=hidden_size)
-newLN = NewLayerNorm(LN)
-refLN = RefLayerNorm(LN)
+ref_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+new_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
 
-ref_error = (refLN(x) - LN(x)).mean()
-new_error = (newLN(x) - LN(x)).mean()
-assert torch.allclose(refLN(x), LN(x))
-assert torch.allclose(newLN(x), LN(x))
+for block in ref_model.transformer.h:
+    block.ln_1 = RefLayerNorm(block.ln_1)
+    block.ln_2 = RefLayerNorm(block.ln_2)
 
-# Now, we modify the blocks in the transformer. With my_model.transfomer.h we access the hidden architecture, which is a ModuleList with the two layers that comprise the feed forward block of the architecture.
-
-for block in my_model.transformer.h:
-    print(block.ln_1)
+for block in new_model.transformer.h:
     block.ln_1 = NewLayerNorm(block.ln_1)
     block.ln_2 = NewLayerNorm(block.ln_2)
-# nn.LayerNorm(block.ln_1.normalized_shape)
+
+# std_model: standard model from HF
+# puma_model: Puma using PyTorch's LN
+# ref_model: Puma while keeping LN intact, except we use our reference
+# implementation instead of PyTorch's
+# new_model: Puma while changing LN to use the approximation
 
 # CHANGING SOFTMAX (TODO)
 
 
+# TESTING A SENTENCE
+
+# Disables gradient computation
+std_model.eval()
+puma_model.eval()
+ref_model.eval()
+new_model.eval()
+
+prompt_text = "The secret for success is"
+
+# Tokenize the prompt text
+input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
+
+# Generate text
+# std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+
+# Decode and print the generated text
+# std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
+# puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
+# ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
+new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+
+
+# The below was useful for finding the range of LN:
+# range_end = np.percentile(RefLayerNorm.max_list, 90)
+# range_start = np.percentile(RefLayerNorm.min_list, 10)
+
 
 # Save the model
-
-# my_model.save_pretrained("./gpt2-custom")
+# new_model.save_pretrained("./gpt2-custom")
 # tokenizer.save_pretrained("./gpt2-custom")
