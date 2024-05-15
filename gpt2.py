@@ -225,7 +225,26 @@ new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
 
 
 # Save the model
-alm_model.save_pretrained("./gpt2-custom")
-tokenizer.save_pretrained("./gpt2-custom")
+# alm_model.save_pretrained("./gpt2-custom")
+# tokenizer.save_pretrained("./gpt2-custom")
 
 
+# LM EVAL
+
+import lm_eval
+
+from lm_eval.models.huggingface import HFLM
+model_name = ref_model  # You can use any pretrained model available in HuggingFace's library
+model = HFLM(pretrained=model_name, device="cuda" if torch.cuda.is_available() else "cpu")
+tasks = "lambada_openai"
+device = "cuda:0"
+batch_size = 8
+task_manager = lm_eval.tasks.TaskManager()
+
+results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=model,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    # device=device,
+    batch_size=batch_size)
