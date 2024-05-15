@@ -166,6 +166,11 @@ for block in new_model.transformer.h:
 
 sm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
 
+alm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
+for block in alm_model.transformer.h:
+    block.ln_1 = NewLayerNorm(block.ln_1)
+    block.ln_2 = NewLayerNorm(block.ln_2)
+
 
 # std_model: standard model from HF
 # puma_model: Puma using PyTorch's LN
@@ -173,6 +178,7 @@ sm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
 # implementation instead of PyTorch's
 # new_model: Puma while changing LN to use the approximation
 # sm_model: Puma, LN intact, approx softmax
+# alm_model: Puma, LN modified, approx SM with exact max
 
 # CHANGING SOFTMAX (TODO)
 
@@ -185,6 +191,7 @@ puma_model.eval()
 ref_model.eval()
 new_model.eval()
 sm_model.eval()
+alm_model.eval()
 
 prompt_text = "The secret for success is"
 
@@ -192,8 +199,8 @@ prompt_text = "The secret for success is"
 input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
 
 # Generate and decode text
-# std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
+std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
 
 sm_output = sm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 sm_generated_text = tokenizer.decode(sm_output[0], skip_special_tokens=True)
@@ -201,11 +208,14 @@ sm_generated_text = tokenizer.decode(sm_output[0], skip_special_tokens=True)
 puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
 
-# ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
+alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
 
-# new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
+
+new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
 
 
 
@@ -215,7 +225,7 @@ puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
 
 
 # Save the model
-# new_model.save_pretrained("./gpt2-custom")
-# tokenizer.save_pretrained("./gpt2-custom")
+alm_model.save_pretrained("./gpt2-custom")
+tokenizer.save_pretrained("./gpt2-custom")
 
 
