@@ -140,7 +140,7 @@ class NewLayerNorm(nn.Module):
         sqrt_input = (var + self.eps) / SCALE_ROOT**2
 
         newton = newton_inv_sqrt(sqrt_input)
-        ref = ref_inv_sqrt(sqrt_input)
+        # ref = ref_inv_sqrt(sqrt_input)
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
@@ -201,21 +201,21 @@ input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
 # Generate and decode text
 std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
-
-sm_output = sm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-sm_generated_text = tokenizer.decode(sm_output[0], skip_special_tokens=True)
-
-puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
-
-alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
-
-ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
-
-new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+#
+# sm_output = sm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# sm_generated_text = tokenizer.decode(sm_output[0], skip_special_tokens=True)
+#
+# puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
+#
+# alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
+#
+# ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
+#
+# new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
 
 
 
@@ -234,17 +234,35 @@ new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
 import lm_eval
 
 from lm_eval.models.huggingface import HFLM
-model_name = ref_model  # You can use any pretrained model available in HuggingFace's library
-model = HFLM(pretrained=model_name, device="cuda" if torch.cuda.is_available() else "cpu")
 tasks = "lambada_openai"
-device = "cuda:0"
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
 
-results = lm_eval.simple_evaluate( # call simple_evaluate
-    model=model,
+std_model_lmeval = std_model  # You can use any pretrained model available in HuggingFace's library
+if torch.cuda.is_available(): std_model_lmeval.to('cuda')
+std_model_lmeval = HFLM(pretrained=std_model_lmeval)
+
+std_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=std_model_lmeval,
     tasks=tasks,
     num_fewshot=0,
     task_manager=task_manager,
-    # device=device,
     batch_size=batch_size)
+
+# Modified model
+mod_model_lmeval = alm_model  # You can use any pretrained model available in HuggingFace's library
+if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
+mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
+
+mod_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=mod_model_lmeval,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    batch_size=batch_size)
+
+print("Standard:")
+print(std_results['results'])
+
+print("Modified:")
+print(mod_results['results'])
