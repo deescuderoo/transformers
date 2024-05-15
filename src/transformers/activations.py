@@ -26,7 +26,7 @@ from .utils import logging
 
 logger = logging.get_logger(__name__)
 
-SCALE = 200
+SCALE_FOR_LESS_THAN = 200
 
 
 class PumaGELUActivation(nn.Module):
@@ -44,12 +44,12 @@ class PumaGELUActivation(nn.Module):
                 pow(x, 4) + 0.3603292692789629 * pow(x, 2) + 0.5*x +\
                 0.008526321541038084
 
-        scaled_input = input / SCALE
+        scaled_input = input / SCALE_FOR_LESS_THAN
 
-        res = approx_less_than(scaled_input, -4/SCALE) * (-f_0(input))\
-            + approx_less_than(scaled_input, -1.95/SCALE)*(f_0(input) - f_1(input)) \
-            + approx_less_than(scaled_input, 3/SCALE)*(f_1(input)) \
-            + approx_less_than(3/SCALE, scaled_input)*(input)
+        res = approx_less_than(scaled_input, -4/SCALE_FOR_LESS_THAN) * (-f_0(input))\
+            + approx_less_than(scaled_input, -1.95/SCALE_FOR_LESS_THAN)*(f_0(input) - f_1(input)) \
+            + approx_less_than(scaled_input, 3/SCALE_FOR_LESS_THAN)*(f_1(input)) \
+            + approx_less_than(3/SCALE_FOR_LESS_THAN, scaled_input)*(input)
 
         return res
 
