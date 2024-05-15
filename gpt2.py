@@ -238,6 +238,8 @@ tasks = "lambada_openai"
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
 
+
+# Standard moodel
 std_model_lmeval = std_model  # You can use any pretrained model available in HuggingFace's library
 if torch.cuda.is_available(): std_model_lmeval.to('cuda')
 std_model_lmeval = HFLM(pretrained=std_model_lmeval)
