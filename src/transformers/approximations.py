@@ -5,6 +5,7 @@ import torch
 def compare_f(x, n):
     res = 0
     for i in range(n+1):
+        ## c * x * (1 - x^2)^i
         res += 1/pow(4, i) * scipy.special.comb(2*i, i) * x * pow(1 - pow(x, 2), i)
 
     return res, ceil(log2(n))+1
@@ -73,6 +74,13 @@ def approx_exp(x):
     output[x <= -3.4028e+38] = 0
     return output
 
+def approx_inv(x, d=5):
+    a = 2 - x
+    b = 1 - x 
+    for _ in range(d):
+        b = pow(b, 2)
+        a += 1 + b 
+    return a
 
 def ref_softmax(x, dim=None):
     maxes = torch.max(x, dim, keepdim=True)[0]
@@ -86,17 +94,18 @@ def approx_softmax(x, dim=None):
     # print(f"max:\n{x.max()}")
     maxes = torch.max(x, dim, keepdim=True)[0]
 
-    # For debugging
-    if not torch.all(x-maxes <= 0):
-        print(f"error:\n{(approx_exp(x-maxes) - torch.exp(x-maxes)).abs().max()}")
-        print(f"input:\n{x-maxes}")
-        print(f"real:\n{torch.exp(x-maxes)}")
-        print(f"approx:\n{approx_exp(x-maxes)}")
-        print("-----------------------------------------\n")
-        raise RuntimeError
+    # # For debugging
+    # if not torch.all(x-maxes <= 0):
+    #     print(f"error:\n{(approx_exp(x-maxes) - torch.exp(x-maxes)).abs().max()}")
+    #     print(f"input:\n{x-maxes}")
+    #     print(f"real:\n{torch.exp(x-maxes)}")
+    #     print(f"approx:\n{approx_exp(x-maxes)}")
+    #     print("-----------------------------------------\n")
+    #     raise RuntimeError
 
     x_exp = approx_exp(x-maxes)
     # x_exp = torch.exp(x-maxes)
 
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
-    return x_exp/x_exp_sum
+    # return x_exp/x_exp_sum
+    return x_exp * approx_inv(x_exp_sum)
