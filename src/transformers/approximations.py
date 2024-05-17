@@ -84,8 +84,32 @@ def approx_max(x_vec, d):
 
     print("beginning max with input ", x_vec)
 
-    mean = sum(x_vec)/len(x_vec)
-    x_sub = [pow(x - mean, 2) for x in x_vec]
+    mean = torch.sum(x_vec, dim=-1)  # [0]/x_vec.dim()
+    # for i in range(1,4):
+        # print(i, torch.sum(x_vec, dim=i)[0])
+    # print(torch.sum(x_vec, dim=3)[0]/x_vec.dim())
+    # print("length", x_vec.dim())
+    # print("mean", mean)
+        # print(i, mean.repeat(i))
+    # print(mean)
+    # print(mean.shape)
+    mean = mean.unsqueeze(-1)
+    # print(mean)
+    # print(mean.shape)
+    mean_extended = mean 
+    # for _ in range(1, x_vec.shape[-1]):
+    for _ in range(1, 5):
+        mean_extended = torch.cat((mean_extended, mean), -1)
+    
+    # print(mean_extended)
+    # print(mean_extended.shape)
+    print(x_vec.shape)
+    # mean.transpose()
+    # print(mean)
+    # mean = mean.unsqueeze(1).repeat(1, 1, 4)
+    # print(mean)
+    # x_sub = [pow(x - mean, 2) for x in x_vec]
+    x_sub = torch.pow(x_vec - mean_extended, 2)
     variance = sum(x_sub)/len(x_sub)
 
     SCALE = 10000
@@ -117,6 +141,7 @@ def approx_inv(x, d=5):
     return a
 
 def ref_softmax(x, dim=None):
+    x[x <= -3.4028e+37] = 0
     maxes = torch.max(x, dim, keepdim=True)[0]
     x_exp = torch.exp(x-maxes)
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
@@ -124,15 +149,17 @@ def ref_softmax(x, dim=None):
 
 
 def approx_softmax(x, dim=None):
-    # x[x <= -3.4028e+37] = -1e6
+    x[x <= -3.4028e+37] = 0
     # print(f"max:\n{x.max()}")
     maxes = torch.max(x, dim, keepdim=True)[0]
-    
-    # maxes = approx_max(x, 6)
-    # correct_max = torch.max(x, dim, keepdim=True)[0]
+    # maxes = torch.max(x, dim, keepdim=True)
+    print("correct max", maxes)
+    maxes = approx_max(x, 6)
+    print("res maxes", maxes)
+    correct_max = torch.max(x, dim, keepdim=True)[0]
     # print(maxes, correct_max)
-    # assert(maxes == correct_max)
-    # # maxes = torch.empty(x.dim()).fill_(approx_max(x, 6))
+    assert(maxes == correct_max)
+    # maxes = torch.empty(x.dim()).fill_(approx_max(x, 6))
     
 
     # # For debugging
