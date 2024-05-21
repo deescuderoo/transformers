@@ -87,7 +87,7 @@ def approx_max(x_vec, d_g = 3, d_f = 4):
     ## 3) compute mean
     ## This gives variance. Shift of 4*variance will likely be very close to the max
 
-    SCALE = 10
+    SCALE = 100
 
     i = 0
     j = 0

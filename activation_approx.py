@@ -106,7 +106,8 @@ def approx_max(x_vec, d):
         i = approx_max(x_vec[:midpoint], d)
         j = approx_max(x_vec[midpoint:], d)
 
-    return j + (i-j) * (approx_compare((i-j)/SCALE, d)+1)/2
+    # return j + (i-j) * (approx_compare((i-j)/SCALE, d)+1)/2
+    return i + (j-i) * (approx_compare((j-i)/SCALE, d)+1)/2
 
 
     mean = sum(x_vec)/len(x_vec)
@@ -123,12 +124,12 @@ def test_approx_max():
     # max_val = 100
 
     # vals = range(1, max_val)
-    vals = [0.0307, -1.3192,  0.0000,  0.0000,  0.0000]
+    vals = [4.0307, -5.3192,  3.1441,  5.0012,  -2.2141]
     # vals = [v* for v in vals]
 
     correct = max(vals)
 
-    res = approx_max(vals, 4)
+    res = approx_max(vals, 3)
 
     print(correct, res)
 
