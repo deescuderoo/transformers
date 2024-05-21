@@ -147,7 +147,7 @@ def approx_inv(x, d=5):
     return a
 
 def ref_softmax(x, dim=None):
-    x[x <= -3.4028e+37] = 0
+    # x[x <= -3.4028e+37] = 0
     maxes = torch.max(x, dim, keepdim=True)[0]
     x_exp = torch.exp(x-maxes)
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
@@ -155,76 +155,25 @@ def ref_softmax(x, dim=None):
 
 
 def approx_softmax(x, dim=None):
-    x[x <= -3.4028e+37] = 0
-    # print(f"max:\n{x.max()}")
-    # maxes = torch.max(x, dim, keepdim=True)[0]
-    # maxes = torch.max(x, dim, keepdim=True)
-    # print("correct max", maxes)
-    print("input", x[0, 0, 1])
-    maxes = approx_max(x, 6)
-    # print("res maxes", maxes[0, 0, 1])
-    # correct_max = torch.max(x, dim, keepdim=True)[0]
-    # print(maxes, correct_max)
-    # assert(maxes == correct_max)
-    # maxes = torch.empty(x.dim()).fill_(approx_max(x, 6))
-    maxes = maxes.unsqueeze(-1)
 
-    maxes_extended = maxes 
-    # for _ in range(1, x_vec.shape[-1]):
-    for _ in range(1, x.shape[-1]):
-        maxes_extended = torch.cat((maxes_extended, maxes), -1)
-    
-    # print(x.shape)
-    # print(maxes_extended.shape)
+    maxes = torch.max(x, dim, keepdim=True)[0]
 
-    # # For debugging
-    # if not torch.all(x-maxes <= 0):
-    #     print(f"error:\n{(approx_exp(x-maxes) - torch.exp(x-maxes)).abs().max()}")
-    #     print(f"input:\n{x-maxes}")
-    #     print(f"real:\n{torch.exp(x-maxes)}")
-    #     print(f"approx:\n{approx_exp(x-maxes)}")
-    #     print("-----------------------------------------\n")
-    #     raise RuntimeError
+    # For debugging
+    if not torch.all(x-maxes <= 0):
+        print(f"error:\n{(approx_exp(x-maxes) - torch.exp(x-maxes)).abs().max()}")
+        print(f"input:\n{x-maxes}")
+        print(f"real:\n{torch.exp(x-maxes)}")
+        print(f"approx:\n{approx_exp(x-maxes)}")
+        print("-----------------------------------------\n")
+        raise RuntimeError
 
-    # assert(torch.all(x-maxes_extended <= 1))
-
-    LOG_SCALE_EXP = 3
-    inner_diff = (x-maxes_extended) / pow(2, LOG_SCALE_EXP)
-    # if not (torch.all(inner_diff <= 1.5)):
-    print("exponents: ", inner_diff[0, 1, 1])
-    #     # print(torch.index(inner_diff <= 1))
-    #     # bad_index = torch.all(inner_diff <= 1)
-    #     # print(inner_diff[.nonzero()])
-        # assert(False)
-
-    x_exp = approx_exp(inner_diff, 6)   ## all exponents are < 0
-    # for _ in range(LOG_SCALE_EXP):
-        # x_exp *= x_exp
-    # x_exp = approx_exp(-1*x)   ## all exponents are < 0
+    x_exp = approx_exp(x-maxes)
     # x_exp = torch.exp(x-maxes)
-    print("res exp", x_exp[0, 1, 1])
 
-
-    # x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
-    x_exp_sum = torch.sum(x_exp , dim=-1)  # [0]/x_vec.dim()
-    
-    print("res sum", x_exp_sum[0, 1, 1])
-    # print(x_exp_sum)
-    
-    LOG_SCALE_INV = 3
-    print(x_exp_sum)
-    x_inv = approx_inv(x_exp_sum / pow(2,LOG_SCALE_INV), d=6)
-    for _ in range(LOG_SCALE_INV):
-        x_inv *= x_inv
-
-    x_inv = x_inv.unsqueeze(-1)
-
-    x_inv_extended = x_inv
-    for _ in range(1, x_inv.shape[-1]):
-        x_inv_extended = torch.cat((x_inv_extended, x_inv), -1)
-
-    print("res inv", x_inv)
-
-    # print(x_exp_sum, 1/x_exp_sum, approx_inv(x_exp_sum / SCALE, d=10) / SCALE)
+    x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     # return x_exp/x_exp_sum
-    return x_exp * x_inv_extended
+
+    ## TODO: Implement scaling down by the length of the sum
+    x_inv = approx_inv(x_exp_sum/1000, d=6)/1000
+
+    return x_exp * x_inv
