@@ -188,16 +188,30 @@ for block in alm_model.transformer.h:
 
 # Disables gradient computation
 std_model.eval()
+if torch.cuda.is_available(): std_model.to('cuda')
+
 puma_model.eval()
+if torch.cuda.is_available(): puma_model.to('cuda')
+
 ref_model.eval()
+if torch.cuda.is_available(): ref_model.to('cuda')
+
 new_model.eval()
+if torch.cuda.is_available(): new_model.to('cuda')
+
 sm_model.eval()
+if torch.cuda.is_available(): sm_model.to('cuda')
+
 alm_model.eval()
+if torch.cuda.is_available(): alm_model.to('cuda')
+
 
 prompt_text = "The secret for success is"
 
 ### Tokenize the prompt text
 input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
+if torch.cuda.is_available(): input_ids = input_ids.to('cuda')
+
 
 ### Generate and decode text
 
@@ -261,7 +275,7 @@ task_manager = lm_eval.tasks.TaskManager()
 
 # Modified model
 mod_model_lmeval = alm_model
-# if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
+if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
 mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 
 mod_results = lm_eval.simple_evaluate( # call simple_evaluate

@@ -262,11 +262,16 @@ def approx_softmax(x, dim=None):
     # Division
     # out = x_exp/x_exp_sum
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
+
     # assert torch.all(x_exp_sum / normalizer <= 1)
 
     # norm: divide by length so that quotient is <1 (denominator
     # becomes the mean)
     G_ITERATIONS = 10
+    if torch.cuda.is_available():
+        normalizer = normalizer.to('cuda')
+        # print(f"Device: {normalizer.device}")
+
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
 
