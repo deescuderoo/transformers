@@ -105,6 +105,7 @@ def newton_inv_sqrt(x):
     Newton approximation for 1/sqrt(x)
     '''
     NEWTON_ITERATIONS = 20
+    # NEWTON_ITERATIONS = 15
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -128,6 +129,7 @@ class NewLayerNorm(nn.Module):
         self.eps = old_ln.eps
 
     def forward(self, x):
+        # print("running approx layernorm")
         # Scales the variance down by SCALE_ROOT^2. Important to fit
         # in the required range
         SCALE_ROOT = 30
@@ -152,7 +154,8 @@ class NewLayerNorm(nn.Module):
 # which is a ModuleList with the two layers that comprise
 # the feed forward block of the architecture.
 
-ref_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+# ref_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+ref_model = GPT2LMHeadModel.from_pretrained("gpt2")
 new_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
 
 for block in ref_model.transformer.h:
@@ -208,26 +211,26 @@ input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
 # print("------------------------------------------\n")
 # print(f"sm output:\n{sm_generated_text}")
 
-puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
-print("------------------------------------------\n")
-print(f"puma output:\n{puma_generated_text}")
-
-# alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
+# puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
 # print("------------------------------------------\n")
-# print(f"alm output:\n{alm_generated_text}")
+# print(f"puma output:\n{puma_generated_text}")
 
-
-# ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"ref output:\n{ref_generated_text}")
-
-new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
 print("------------------------------------------\n")
-print(f"new output:\n{new_generated_text}")
+print(f"alm output:\n{alm_generated_text}")
+
+
+ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"ref output:\n{ref_generated_text}")
+
+# new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+# print("------------------------------------------\n")
+# print(f"new output:\n{new_generated_text}")
 
 
 # The below was useful for finding the range of LN:
@@ -242,49 +245,52 @@ print(f"new output:\n{new_generated_text}")
 
 # # LM EVAL
 
-# import lm_eval
+import lm_eval
 
-# from lm_eval.models.huggingface import HFLM
-# tasks = [
-#     "lambada_openai",
-#     # "hellaswag",
-#     # "arc_easy",
-#     # "wikitext",
-#         # "glue"
-#         ]
-# batch_size = 8
-# task_manager = lm_eval.tasks.TaskManager()
+from lm_eval.models.huggingface import HFLM
+tasks = [
+    "lambada_openai",
+    # "hellaswag",
+    # "arc_easy",
+    # "wikitext",
+        # "glue"
+        ]
+batch_size = 8
+task_manager = lm_eval.tasks.TaskManager()
 
-# #
-# # # Standard moodel
-# # std_model_lmeval = std_model
-# # if torch.cuda.is_available(): std_model_lmeval.to('cuda')
-# # std_model_lmeval = HFLM(pretrained=std_model_lmeval)
-# #
-# # std_results = lm_eval.simple_evaluate( # call simple_evaluate
-# #     model=std_model_lmeval,
-# #     tasks=tasks,
-# #     num_fewshot=0,
-# #     task_manager=task_manager,
-# #     batch_size=batch_size)
 
-# # Modified model
-# mod_model_lmeval = alm_model
+# Modified model
+mod_model_lmeval = alm_model
 # if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
-# mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
+mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 
-# mod_results = lm_eval.simple_evaluate( # call simple_evaluate
-#     model=mod_model_lmeval,
-#     tasks=tasks,
-#     num_fewshot=0,
-#     task_manager=task_manager,
-#     batch_size=batch_size)
+mod_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=mod_model_lmeval,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    batch_size=batch_size)
 
-# # print("Standard:")
-# # print(std_results['results'])
+print("Modified:")
+print(mod_results['results'])
 
-# print("Modified:")
-# print(mod_results['results'])
+
+# Standard moodel
+std_model_lmeval = std_model
+if torch.cuda.is_available(): std_model_lmeval.to('cuda')
+std_model_lmeval = HFLM(pretrained=std_model_lmeval)
+
+std_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=std_model_lmeval,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    batch_size=batch_size)
+
+print("Standard:")
+print(std_results['results'])
+
+
 
 # import pickle
 # #

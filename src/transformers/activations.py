@@ -35,6 +35,7 @@ class PumaGELUActivation(nn.Module):
     """
 
     def forward(self, input: Tensor) -> Tensor:
+        # print("running approx gelu")
         def f_0(x):
             return -0.011034134030615728*pow(x, 3) - 0.11807612951181953 *\
                 pow(x, 2) - 0.42226581151983866 * x - 0.5054031199708174
