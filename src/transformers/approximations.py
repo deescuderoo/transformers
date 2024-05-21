@@ -29,12 +29,14 @@ def compare_g(x, index = 1):
         assert(False)
 
 
-def approx_compare(x):
+def approx_compare(x, d_g = 3, d_f = 4):
     ## always just compare with zero. Plaintext offset can be added for zero error
 
     res = x 
-    d_g = 3
-    d_f = 4
+    # d_g = 3
+    # d_f = 4
+    # d_g = 
+    # d_f = d
 
     total_depth = 0
 
@@ -65,58 +67,76 @@ def approx_less_than(x, t):
 
 # SOFTMAX
 
-def approx_sqrt(x, d):
-    if not (torch.all(0 <= x)):
-        print(x)
-        print("approx sqrt 0 <= x failed")
-        assert(False)
-    assert(torch.all(x <= 1))
-    a = x
-    b = x-1
-    for _ in range(d):
-        a *= 1 - b/2
-        b = pow(b, 2) * (b - 3)/4
-    return a
+# def approx_sqrt(x, d):
+#     if not (torch.all(0 <= x)):
+#         print(x)
+#         print("approx sqrt 0 <= x failed")
+#         assert(False)
+#     assert(torch.all(x <= 1))
+#     a = x
+#     b = x-1
+#     for _ in range(d):
+#         a *= 1 - b/2
+#         b = pow(b, 2) * (b - 3)/4
+#     return a
 
 
-def approx_max(x_vec, d):
+def approx_max(x_vec, d_g = 3, d_f = 4):
     ## 1) compute mean
     ## 2) subtract x and square
     ## 3) compute mean
     ## This gives variance. Shift of 4*variance will likely be very close to the max
 
-    return torch.sum(x_vec, dim=-1)/x_vec.shape[-1]
+    SCALE = 10
 
-    # print("beginning max with input ", x_vec)
-    # print("beginning max")
-
-    mean = torch.sum(x_vec, dim=-1)/x_vec.shape[-1]
-    # print("max mean", mean[0,0,1])
-    # print(mean.shape)
-    mean = mean.unsqueeze(-1)
-    # print(mean)
-    # print(mean.shape)
-    mean_extended = mean 
-    # for _ in range(1, x_vec.shape[-1]):
-    for _ in range(1, x_vec.shape[-1]):
-        mean_extended = torch.cat((mean_extended, mean), -1)
+    i = 0
+    j = 0
+    if len(x_vec) == 0:
+        return 
+    elif len(x_vec) == 1:
+        return x_vec[0]
+    elif len(x_vec) == 2:
+        i = x_vec[0]
+        j = x_vec[1]
+    else:
+        midpoint = len(x_vec)//2
+        i = approx_max(x_vec[:midpoint], d_g, d_f)
+        j = approx_max(x_vec[midpoint:], d_g, d_f)
     
-    # print(mean_extended)
-    # print(mean_extended.shape)
-    # print(x_vec.shape)
-    # mean.transpose()
-    # print(mean)
-    # mean = mean.unsqueeze(1).repeat(1, 1, 4)
-    # print(mean)
-    # x_sub = [pow(x - mean, 2) for x in x_vec]
-    x_sub = torch.pow(x_vec - mean_extended, 2)
-    # print("max sub", x_sub[0,0,1])
-    variance = torch.sum(x_sub, dim=-1)/x_vec.shape[-1]
+    return j + (i-j) * (approx_compare((i-j)/SCALE, d_g, d_f)+1)/2
 
-    SCALE = 10000
+    # # return torch.sum(x_vec, dim=-1)/x_vec.shape[-1]
 
-    # return 4*sqrt(variance)
-    return 5*approx_sqrt(variance/SCALE, d) * sqrt(SCALE)
+    # # print("beginning max with input ", x_vec)
+    # # print("beginning max")
+
+    # mean = torch.sum(x_vec, dim=-1)/x_vec.shape[-1]
+    # # print("max mean", mean[0,0,1])
+    # # print(mean.shape)
+    # mean = mean.unsqueeze(-1)
+    # # print(mean)
+    # # print(mean.shape)
+    # mean_extended = mean 
+    # # for _ in range(1, x_vec.shape[-1]):
+    # for _ in range(1, x_vec.shape[-1]):
+    #     mean_extended = torch.cat((mean_extended, mean), -1)
+    
+    # # print(mean_extended)
+    # # print(mean_extended.shape)
+    # # print(x_vec.shape)
+    # # mean.transpose()
+    # # print(mean)
+    # # mean = mean.unsqueeze(1).repeat(1, 1, 4)
+    # # print(mean)
+    # # x_sub = [pow(x - mean, 2) for x in x_vec]
+    # x_sub = torch.pow(x_vec - mean_extended, 2)
+    # # print("max sub", x_sub[0,0,1])
+    # variance = torch.sum(x_sub, dim=-1)/x_vec.shape[-1]
+
+    # SCALE = 10000
+
+    # # return 4*sqrt(variance)
+    # return 5*approx_sqrt(variance/SCALE, d) * sqrt(SCALE)
 
 def approx_exp(x, r = 6):
     # return torch.exp(x)
@@ -148,6 +168,7 @@ def approx_inv(x, d=5):
 
 def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
+    print("input shape", x.shape)
     maxes = torch.max(x, dim, keepdim=True)[0]
     x_exp = torch.exp(x-maxes)
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
@@ -157,6 +178,10 @@ def ref_softmax(x, dim=None):
 def approx_softmax(x, dim=None):
 
     maxes = torch.max(x, dim, keepdim=True)[0]
+    ## TODO: incorporate approximate max
+    # print("input shape", x.shape)
+    # x_vec = torch.split(x, x.shape[dim], dim=dim)
+    # maxes = approx_max(x_vec, 4, 4)
 
     # For debugging
     if not torch.all(x-maxes <= 0):

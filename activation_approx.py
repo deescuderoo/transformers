@@ -28,12 +28,12 @@ def compare_g(x, index = 1):
         assert(False)
 
 
-def approx_compare(x):
+def approx_compare(x, d=2):
     ## always just compare with zero. Plaintext offset can be added for zero error
 
     res = x 
-    d_g = 2
-    d_f = 2
+    d_g = d
+    d_f = d
 
     total_depth = 0
 
@@ -90,21 +90,23 @@ def approx_max(x_vec, d):
     ## 3) compute mean
     ## This gives variance. Shift of 4*variance will likely be very close to the max
 
-    # SCALE = 10
+    SCALE = 10
+    
+    i = 0
+    j = 0
+    if len(x_vec) == 0:
+        return
+    elif len(x_vec) == 1:
+        return x_vec[0]
+    elif len(x_vec) == 2:
+        i = x_vec[0]
+        j = x_vec[1]
+    else:
+        midpoint = len(x_vec)//2
+        i = approx_max(x_vec[:midpoint], d)
+        j = approx_max(x_vec[midpoint:], d)
 
-    # if len(x_vec) == 0:
-    #     return
-    # elif len(x_vec) == 1:
-    #     return x_vec
-    # elif len(x_vec) == 2:
-    #     i = x_vec[0]
-    #     j = x_vec[1]
-    # else:
-    #     midpoint = len(x_vec)//2
-    #     i = approx_max(x_vec[:midpoint], d)
-    #     j = approx_max(x_vec[midpoint:], d)
-
-    # return j + (i-j) * (approx_compare((i-j)/SCALE)+1)/2
+    return j + (i-j) * (approx_compare((i-j)/SCALE, d)+1)/2
 
 
     mean = sum(x_vec)/len(x_vec)
@@ -118,7 +120,7 @@ def approx_max(x_vec, d):
 
 def test_approx_max():
 
-    max_val = 100
+    # max_val = 100
 
     # vals = range(1, max_val)
     vals = [0.0307, -1.3192,  0.0000,  0.0000,  0.0000]
@@ -174,6 +176,13 @@ def approx_inv(x, d=5):
         # print(a)
     return a
 
+# def goldschmidt(x, d=5):
+#     for i in range(d):
+#         """
+#         TODO: Implement this
+#         """
+
+
 def test_approx_inverse():
 
     max_val = 20
@@ -186,8 +195,10 @@ def test_approx_inverse():
         correct = 1/v 
 
         res = approx_inv(v, d=6)
+        # res2 = goldschmidt(v, d=6)
 
-        print(v, correct, res)
+        print(v, correct)
+        # print("\t", res, res2)
 
 # test_approx_inverse()
 
@@ -206,10 +217,10 @@ def correct_softmax(x_vec):
     print("correct inv", 1.0/x_sum)
     return [x/x_sum for x in x_exp]
 
-def approx_softmax(x_vec, d_max, d_inv):
+def approx_softmax(x_vec, d_max, d_exp, d_inv):
     x_max = approx_max(x_vec, d_max)
     print("res max", x_max)
-    x_exp = [approx_exp(x - x_max) for x in x_vec]
+    x_exp = [approx_exp(x - x_max, d_exp) for x in x_vec]
     print("res exp", x_exp)
     x_sum = sum(x_exp)
     print("res sum", x_sum)
@@ -225,11 +236,12 @@ def test_softmax():
     correct = correct_softmax(vals)
 
     d_max = 6
+    d_exp = 6
     d_inv = 6
 
-    res = approx_softmax(vals, d_max, d_inv)
+    res = approx_softmax(vals, d_max, d_exp, d_inv)
 
     print(correct)
     print(res)
 
-test_softmax()
+# test_softmax()
