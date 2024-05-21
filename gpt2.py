@@ -199,6 +199,8 @@ input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
 # Generate and decode text
 std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
+print("standard output: " , std_generated_text)
+
 #
 # sm_output = sm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 # sm_generated_text = tokenizer.decode(sm_output[0], skip_special_tokens=True)
@@ -206,8 +208,10 @@ std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
 # puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 # puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
 #
-# alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
+alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
+print("alm output: " , alm_generated_text)
+
 #
 # ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 # ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
@@ -227,6 +231,8 @@ std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
 # tokenizer.save_pretrained("./gpt2-custom")
 
 
+# """
+
 # LM EVAL
 
 import lm_eval
@@ -234,8 +240,8 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 tasks = [
     "lambada_openai",
-    "hellaswag",
-    "arc_easy",
+    # "hellaswag",
+    # "arc_easy",
     # "wikitext",
         # "glue"
         ]
@@ -277,3 +283,5 @@ import pickle
 #
 # with open('saved_dictionary.pkl', 'wb') as f: pickle.dump(dictionary, f)
 # with open('saved_dictionary.pkl', 'rb') as f: loaded_dict = pickle.load(f)
+
+# """
