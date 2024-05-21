@@ -104,7 +104,7 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 13
+    NEWTON_ITERATIONS = 20
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -130,7 +130,7 @@ class NewLayerNorm(nn.Module):
     def forward(self, x):
         # Scales the variance down by SCALE_ROOT^2. Important to fit
         # in the required range
-        SCALE_ROOT = 10
+        SCALE_ROOT = 30
 
         length = x.shape[-1]
         mean = x.mean(-1, keepdim=True)
@@ -140,7 +140,7 @@ class NewLayerNorm(nn.Module):
         sqrt_input = (var + self.eps) / SCALE_ROOT**2
 
         newton = newton_inv_sqrt(sqrt_input)
-        # ref = ref_inv_sqrt(sqrt_input)
+        # newton = ref_inv_sqrt(sqrt_input)
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
@@ -193,32 +193,41 @@ alm_model.eval()
 
 prompt_text = "The secret for success is"
 
-# Tokenize the prompt text
+### Tokenize the prompt text
 input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
 
-# Generate and decode text
-std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
-print("standard output: " , std_generated_text)
+### Generate and decode text
 
-#
+# std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
+# print("------------------------------------------\n")
+# print(f"std output:\n{std_generated_text}")
+
 # sm_output = sm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 # sm_generated_text = tokenizer.decode(sm_output[0], skip_special_tokens=True)
-#
-# puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
-#
-alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
-print("alm output: " , alm_generated_text)
+# print("------------------------------------------\n")
+# print(f"sm output:\n{sm_generated_text}")
 
-#
+puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"puma output:\n{puma_generated_text}")
+
+# alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
+# print("------------------------------------------\n")
+# print(f"alm output:\n{alm_generated_text}")
+
+
 # ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 # ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
-#
-# new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+# print("------------------------------------------\n")
+# print(f"ref output:\n{ref_generated_text}")
 
+new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"new output:\n{new_generated_text}")
 
 
 # The below was useful for finding the range of LN:
@@ -231,57 +240,55 @@ print("alm output: " , alm_generated_text)
 # tokenizer.save_pretrained("./gpt2-custom")
 
 
-# """
+# # LM EVAL
 
-# LM EVAL
+# import lm_eval
 
-import lm_eval
+# from lm_eval.models.huggingface import HFLM
+# tasks = [
+#     "lambada_openai",
+#     # "hellaswag",
+#     # "arc_easy",
+#     # "wikitext",
+#         # "glue"
+#         ]
+# batch_size = 8
+# task_manager = lm_eval.tasks.TaskManager()
 
-from lm_eval.models.huggingface import HFLM
-tasks = [
-    "lambada_openai",
-    # "hellaswag",
-    # "arc_easy",
-    # "wikitext",
-        # "glue"
-        ]
-batch_size = 8
-task_manager = lm_eval.tasks.TaskManager()
+# #
+# # # Standard moodel
+# # std_model_lmeval = std_model
+# # if torch.cuda.is_available(): std_model_lmeval.to('cuda')
+# # std_model_lmeval = HFLM(pretrained=std_model_lmeval)
+# #
+# # std_results = lm_eval.simple_evaluate( # call simple_evaluate
+# #     model=std_model_lmeval,
+# #     tasks=tasks,
+# #     num_fewshot=0,
+# #     task_manager=task_manager,
+# #     batch_size=batch_size)
 
-#
-# # Standard moodel
-# std_model_lmeval = std_model
-# if torch.cuda.is_available(): std_model_lmeval.to('cuda')
-# std_model_lmeval = HFLM(pretrained=std_model_lmeval)
-#
-# std_results = lm_eval.simple_evaluate( # call simple_evaluate
-#     model=std_model_lmeval,
+# # Modified model
+# mod_model_lmeval = alm_model
+# if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
+# mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
+
+# mod_results = lm_eval.simple_evaluate( # call simple_evaluate
+#     model=mod_model_lmeval,
 #     tasks=tasks,
 #     num_fewshot=0,
 #     task_manager=task_manager,
 #     batch_size=batch_size)
 
-# Modified model
-mod_model_lmeval = alm_model
-if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
-mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
+# # print("Standard:")
+# # print(std_results['results'])
 
-mod_results = lm_eval.simple_evaluate( # call simple_evaluate
-    model=mod_model_lmeval,
-    tasks=tasks,
-    num_fewshot=0,
-    task_manager=task_manager,
-    batch_size=batch_size)
+# print("Modified:")
+# print(mod_results['results'])
 
-# print("Standard:")
-# print(std_results['results'])
+# import pickle
+# #
+# # with open('saved_dictionary.pkl', 'wb') as f: pickle.dump(dictionary, f)
+# # with open('saved_dictionary.pkl', 'rb') as f: loaded_dict = pickle.load(f)
 
-print("Modified:")
-print(mod_results['results'])
 
-import pickle
-#
-# with open('saved_dictionary.pkl', 'wb') as f: pickle.dump(dictionary, f)
-# with open('saved_dictionary.pkl', 'rb') as f: loaded_dict = pickle.load(f)
-
-# """
