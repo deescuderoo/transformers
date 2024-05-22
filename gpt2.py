@@ -104,7 +104,7 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 20
+    NEWTON_ITERATIONS = 16
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -262,9 +262,9 @@ import lm_eval
 
 from lm_eval.models.huggingface import HFLM
 tasks = [
-    "lambada_openai",
+    # "lambada_openai",
     # "hellaswag",
-    # "arc_easy",
+    "arc_easy",
     # "wikitext",
         # "glue"
         ]
@@ -284,25 +284,25 @@ mod_results = lm_eval.simple_evaluate( # call simple_evaluate
     task_manager=task_manager,
     batch_size=batch_size)
 
-
-# Standard moodel
-std_model_lmeval = std_model
-if torch.cuda.is_available(): std_model_lmeval.to('cuda')
-std_model_lmeval = HFLM(pretrained=std_model_lmeval)
-
-std_results = lm_eval.simple_evaluate( # call simple_evaluate
-    model=std_model_lmeval,
-    tasks=tasks,
-    num_fewshot=0,
-    task_manager=task_manager,
-    batch_size=batch_size)
+#
+# # Standard model
+# std_model_lmeval = std_model
+# if torch.cuda.is_available(): std_model_lmeval.to('cuda')
+# std_model_lmeval = HFLM(pretrained=std_model_lmeval)
+#
+# std_results = lm_eval.simple_evaluate( # call simple_evaluate
+#     model=std_model_lmeval,
+#     tasks=tasks,
+#     num_fewshot=0,
+#     task_manager=task_manager,
+#     batch_size=batch_size)
 
 
 print("Modified:")
 print(mod_results['results'])
-
-print("Standard:")
-print(std_results['results'])
+#
+# print("Standard:")
+# print(std_results['results'])
 
 
 

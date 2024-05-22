@@ -31,15 +31,15 @@ def compare_g(x, index = 1):
 
 def approx_compare(x, d_g = 4, d_f = 4):
     ## always just compare with zero. Plaintext offset can be added for zero error
-
+    DEGREE_FG = 4
     res = x 
     total_depth = 0
 
     for _ in range(d_g):
-        res, depth = compare_g(res, 4)
+        res, depth = compare_g(res, DEGREE_FG)
         total_depth += depth
     for _ in range(d_f):
-        res, depth = compare_f(res, 4)
+        res, depth = compare_f(res, DEGREE_FG)
         total_depth += depth
 
     return res, total_depth
@@ -53,7 +53,7 @@ def test_approx():
 
 # test_approx()
 
-def approx_less_than(x, t, d_g = 3, d_f = 4, SCALE = 1):
+def approx_less_than(x, t, d_g = 2, d_f = 2, SCALE = 1):
     # assert(abs(t - x) < 1)
     res, d = approx_compare((t-x)/SCALE, d_g=d_g, d_f=d_f) 
     # print(d)
@@ -114,38 +114,6 @@ def approx_max(x_vec, d_g = 3, d_f = 4):
     # print(res[1])
     return res
 
-    # # return torch.sum(x_vec, dim=-1)/x_vec.shape[-1]
-
-    # # print("beginning max with input ", x_vec)
-    # # print("beginning max")
-
-    # mean = torch.sum(x_vec, dim=-1)/x_vec.shape[-1]
-    # # print("max mean", mean[0,0,1])
-    # # print(mean.shape)
-    # mean = mean.unsqueeze(-1)
-    # # print(mean)
-    # # print(mean.shape)
-    # mean_extended = mean 
-    # # for _ in range(1, x_vec.shape[-1]):
-    # for _ in range(1, x_vec.shape[-1]):
-    #     mean_extended = torch.cat((mean_extended, mean), -1)
-    
-    # # print(mean_extended)
-    # # print(mean_extended.shape)
-    # # print(x_vec.shape)
-    # # mean.transpose()
-    # # print(mean)
-    # # mean = mean.unsqueeze(1).repeat(1, 1, 4)
-    # # print(mean)
-    # # x_sub = [pow(x - mean, 2) for x in x_vec]
-    # x_sub = torch.pow(x_vec - mean_extended, 2)
-    # # print("max sub", x_sub[0,0,1])
-    # variance = torch.sum(x_sub, dim=-1)/x_vec.shape[-1]
-
-    # SCALE = 10000
-
-    # # return 4*sqrt(variance)
-    # return 5*approx_sqrt(variance/SCALE, d) * sqrt(SCALE)
 
 def approx_exp(x, r = 6):
     # return torch.exp(x)
@@ -200,7 +168,7 @@ def approx_softmax(x, dim=None):
     # assert(correct_maxes == maxes)
     maxes = correct_maxes
 
-    EXP_ITERATIONS = 10
+    EXP_ITERATIONS = 7
     x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
     # x_exp = torch.exp(x-maxes)
     x_exp[x <= -3.4028e+37] = 0
@@ -219,7 +187,7 @@ def approx_softmax(x, dim=None):
 
     # norm: divide by length so that quotient is <1 (denominator
     # becomes the mean)
-    G_ITERATIONS = 10
+    G_ITERATIONS = 7
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
         # print(f"Device: {normalizer.device}")
