@@ -149,11 +149,11 @@ def approx_max(x_vec, d_g = 3, d_f = 4):
 
 def approx_exp(x, r = 6):
     # return torch.exp(x)
-    # PARAM_R = 6
     output = pow(1 + x/pow(2, r), pow(2, r))
     # Set output of -inf entries to 0
     # -inf is sometimes (always?) equal to -3.4028e+38
     # output[x <= -3.4028e+37] = 0
+    # print((torch.exp(x) - output).abs().mean())
     return output
 
 def approx_inv(x, d=5):
@@ -176,7 +176,7 @@ def approx_inv(x, d=5):
     return a
 
 def approx_div(x, y, n):
-    INITIAL_ESTIMATE = 20
+    INITIAL_ESTIMATE = 10
     F = INITIAL_ESTIMATE
     N = x
     D = y
@@ -195,63 +195,15 @@ def ref_softmax(x, dim=None):
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     return x_exp/x_exp_sum
 
-
-# def approx_softmax(x, dim=None):
-
-#     maxes = torch.max(x, dim, keepdim=True)[0]
-#     ## TODO: incorporate approximate max
-#     # print("input shape", x.shape)
-#     # x_vec = torch.split(x, x.shape[dim], dim=dim)
-#     # maxes = approx_max(x_vec, 4, 4)
-
-#     # For debugging
-#     if not torch.all(x-maxes <= 0):
-#         print(f"error:\n{(approx_exp(x-maxes) - torch.exp(x-maxes)).abs().max()}")
-#         print(f"input:\n{x-maxes}")
-#         print(f"real:\n{torch.exp(x-maxes)}")
-#         print(f"approx:\n{approx_exp(x-maxes)}")
-#         print("-----------------------------------------\n")
-#         raise RuntimeError
-
-#     x_exp = approx_exp(x-maxes)
-#     # x_exp = torch.exp(x-maxes)
-
-#     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
-#     # return x_exp/x_exp_sum
-
-#     ## TODO: Implement scaling down by the length of the sum
-#     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
-#     x_inv = approx_inv(x_exp_sum/1000, d=6)/1000
-
-#     return x_exp * x_inv
-
 def approx_softmax(x, dim=None):
-    x[x <= -3.4028e+37] = -100  ## raising -inf to fit within the precision
-    # print("running approx softmax")
-    # G_ITERATIONS = 12
-    # print(f"max:\n{x.max()}")
-    # print("input", x.shape, x)
-
-    # x_vec = x.permute(*torch.arange(x.ndim - 1, -1, -1))
-    # # print("max input:", x_vec.shape, x_vec)
-    # maxes = approx_max(x_vec, 4,4)
-    # maxes = maxes.permute(*torch.arange(maxes.ndim - 1, -1, -1))
-    # maxes = maxes.unsqueeze(-1)
-
     correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
     maxes = correct_maxes
 
-    # # For debugging
-    # if not torch.all(x-maxes <= 0):
-    #     print(f"error:\n{(approx_exp(x-maxes) - torch.exp(x-maxes)).abs().max()}")
-    #     print(f"input:\n{x-maxes}")
-    #     print(f"real:\n{torch.exp(x-maxes)}")
-    #     print(f"approx:\n{approx_exp(x-maxes)}")
-    #     print("-----------------------------------------\n")
-    #     raise RuntimeError
-
-    x_exp = approx_exp(x-maxes)
+    EXP_ITERATIONS = 10
+    x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
+    # x_exp = torch.exp(x-maxes)
+    x_exp[x <= -3.4028e+37] = 0
     # assert torch.all(x_exp <= 1)
     # x_exp = torch.exp(x-maxes)
 

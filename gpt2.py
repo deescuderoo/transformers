@@ -105,7 +105,6 @@ def newton_inv_sqrt(x):
     Newton approximation for 1/sqrt(x)
     '''
     NEWTON_ITERATIONS = 20
-    # NEWTON_ITERATIONS = 15
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -230,16 +229,16 @@ if torch.cuda.is_available(): input_ids = input_ids.to('cuda')
 # print("------------------------------------------\n")
 # print(f"puma output:\n{puma_generated_text}")
 
-alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
-print("------------------------------------------\n")
-print(f"alm output:\n{alm_generated_text}")
-
-
-ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
-print("------------------------------------------\n")
-print(f"ref output:\n{ref_generated_text}")
+# alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
+# print("------------------------------------------\n")
+# print(f"alm output:\n{alm_generated_text}")
+#
+#
+# ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+# ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
+# print("------------------------------------------\n")
+# print(f"ref output:\n{ref_generated_text}")
 
 # new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 # new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
@@ -285,9 +284,6 @@ mod_results = lm_eval.simple_evaluate( # call simple_evaluate
     task_manager=task_manager,
     batch_size=batch_size)
 
-print("Modified:")
-print(mod_results['results'])
-
 
 # Standard moodel
 std_model_lmeval = std_model
@@ -301,14 +297,19 @@ std_results = lm_eval.simple_evaluate( # call simple_evaluate
     task_manager=task_manager,
     batch_size=batch_size)
 
+
+print("Modified:")
+print(mod_results['results'])
+
 print("Standard:")
 print(std_results['results'])
 
 
 
-# import pickle
-# #
-# # with open('saved_dictionary.pkl', 'wb') as f: pickle.dump(dictionary, f)
-# # with open('saved_dictionary.pkl', 'rb') as f: loaded_dict = pickle.load(f)
+import pickle
+
+def save_dict(dictionary, name):
+    with open(name+'.pkl', 'wb') as f: pickle.dump(dictionary, f)
+# with open('saved_dictionary.pkl', 'rb') as f: loaded_dict = pickle.load(f)
 
 
