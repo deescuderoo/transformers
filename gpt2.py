@@ -6,6 +6,26 @@ from torch import nn
 import numpy as np
 from transformers import GPT2LMHeadModelNew
 
+# Several models are defined in this file:
+
+# std_model: standard model from HF
+
+# gelu_model: std only approximating the GeLU
+
+# refln_model: GeLU is exact, and LN is exact too but it is
+# implemented from scratch instead of using pytorch's LN (this was
+# useful as a stepping stone)
+
+# gelu_aprxln_model: same as before, but the layer normalization is
+# approximated. Note that softmax is still the standard one in all
+# these models so far
+
+# gelu_stdln_aprxsm_model: approximate GeLU and softmax, but keep
+# LayerNorm intact
+
+# mod_model: this is the completely modified model, it approximates
+# GeLU, LayerNorm and SoftMax
+
 
 # Initializing a GPT2 configuration
 
@@ -33,7 +53,7 @@ tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 # ./src/transformers/activations.py See that file for details
 
 new_config = GPT2Config.from_pretrained("gpt2", activation_function="gelu_puma")
-puma_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+gelu_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
 
 # CHANGING LAYER NORMALIZATION
 
@@ -153,56 +173,48 @@ class NewLayerNorm(nn.Module):
 # which is a ModuleList with the two layers that comprise
 # the feed forward block of the architecture.
 
-# ref_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
-ref_model = GPT2LMHeadModel.from_pretrained("gpt2")
-new_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+refln_model = GPT2LMHeadModel.from_pretrained("gpt2")
+gelu_aprxln_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
 
-for block in ref_model.transformer.h:
+for block in refln_model.transformer.h:
     block.ln_1 = RefLayerNorm(block.ln_1)
     block.ln_2 = RefLayerNorm(block.ln_2)
 
-for block in new_model.transformer.h:
+for block in gelu_aprxln_model.transformer.h:
     block.ln_1 = NewLayerNorm(block.ln_1)
     block.ln_2 = NewLayerNorm(block.ln_2)
 
 
-sm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
+gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
 
-alm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
-for block in alm_model.transformer.h:
+mod_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
+for block in mod_model.transformer.h:
     block.ln_1 = NewLayerNorm(block.ln_1)
     block.ln_2 = NewLayerNorm(block.ln_2)
 
 
-# std_model: standard model from HF
-# puma_model: Puma using PyTorch's LN
-# ref_model: Puma while keeping LN intact, except we use our reference
-# implementation instead of PyTorch's
-# new_model: Puma while changing LN to use the approximation
-# sm_model: Puma, LN intact, approx softmax
-# alm_model: Puma, LN modified, approx SM with exact max
 
-
+####################################################################
 # TESTING A SENTENCE
 
 # Disables gradient computation
 std_model.eval()
 if torch.cuda.is_available(): std_model.to('cuda')
 
-puma_model.eval()
-if torch.cuda.is_available(): puma_model.to('cuda')
+gelu_model.eval()
+if torch.cuda.is_available(): gelu_model.to('cuda')
 
-ref_model.eval()
-if torch.cuda.is_available(): ref_model.to('cuda')
+refln_model.eval()
+if torch.cuda.is_available(): refln_model.to('cuda')
 
-new_model.eval()
-if torch.cuda.is_available(): new_model.to('cuda')
+gelu_aprxln_model.eval()
+if torch.cuda.is_available(): gelu_aprxln_model.to('cuda')
 
-sm_model.eval()
-if torch.cuda.is_available(): sm_model.to('cuda')
+gelu_stdln_aprxsm_model.eval()
+if torch.cuda.is_available(): gelu_stdln_aprxsm_model.to('cuda')
 
-alm_model.eval()
-if torch.cuda.is_available(): alm_model.to('cuda')
+mod_model.eval()
+if torch.cuda.is_available(): mod_model.to('cuda')
 
 
 prompt_text = "The secret for success is"
@@ -214,66 +226,66 @@ if torch.cuda.is_available(): input_ids = input_ids.to('cuda')
 
 ### Generate and decode text
 
-# std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"std output:\n{std_generated_text}")
+std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"std output:\n{std_generated_text}")
 
-# sm_output = sm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# sm_generated_text = tokenizer.decode(sm_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"sm output:\n{sm_generated_text}")
+gelu_output = gelu_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+gelu_generated_text = tokenizer.decode(gelu_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"gelu output:\n{gelu_generated_text}")
 
-# puma_output = puma_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# puma_generated_text = tokenizer.decode(puma_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"puma output:\n{puma_generated_text}")
+refln_output = refln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+refln_generated_text = tokenizer.decode(refln_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"refln output:\n{refln_generated_text}")
 
-# alm_output = alm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# alm_generated_text = tokenizer.decode(alm_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"alm output:\n{alm_generated_text}")
-#
-#
-# ref_output = ref_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# ref_generated_text = tokenizer.decode(ref_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"ref output:\n{ref_generated_text}")
+gelu_aprxln_output = gelu_aprxln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+gelu_aprxln_generated_text = tokenizer.decode(gelu_aprxln_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"gelu_aprxln output:\n{gelu_aprxln_generated_text}")
 
-# new_output = new_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# new_generated_text = tokenizer.decode(new_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"new output:\n{new_generated_text}")
+gelu_stdln_aprxsm_output = gelu_stdln_aprxsm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+gelu_stdln_aprxsm_generated_text = tokenizer.decode(gelu_stdln_aprxsm_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"gelu_stdln_aprxsm output:\n{gelu_stdln_aprxsm_generated_text}")
+
+mod_output = mod_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+mod_generated_text = tokenizer.decode(mod_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"mod output:\n{mod_generated_text}")
 
 
-# The below was useful for finding the range of LN:
-# range_end = np.percentile(RefLayerNorm.max_list, 90)
-# range_start = np.percentile(RefLayerNorm.min_list, 10)
+####################################################################
 
 
 # Save the model
-# alm_model.save_pretrained("./gpt2-custom")
+# mod_model.save_pretrained("./gpt2-custom")
 # tokenizer.save_pretrained("./gpt2-custom")
 
 
-# # LM EVAL
+####################################################################
+
+# LM EVAL using the evaluation harness
 
 import lm_eval
 
 from lm_eval.models.huggingface import HFLM
+# Uncomment the desired tasks
 tasks = [
-    # "lambada_openai",
-    # "hellaswag",
+    "lambada_openai",
+    "hellaswag",
     "arc_easy",
     # "wikitext",
-        # "glue"
+    # "glue"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
 
 
 # Modified model
-mod_model_lmeval = alm_model
+mod_model_lmeval = mod_model
 if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
 mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 
@@ -284,32 +296,49 @@ mod_results = lm_eval.simple_evaluate( # call simple_evaluate
     task_manager=task_manager,
     batch_size=batch_size)
 
-#
-# # Standard model
-# std_model_lmeval = std_model
-# if torch.cuda.is_available(): std_model_lmeval.to('cuda')
-# std_model_lmeval = HFLM(pretrained=std_model_lmeval)
-#
-# std_results = lm_eval.simple_evaluate( # call simple_evaluate
-#     model=std_model_lmeval,
-#     tasks=tasks,
-#     num_fewshot=0,
-#     task_manager=task_manager,
-#     batch_size=batch_size)
+
+# Standard model
+std_model_lmeval = std_model
+if torch.cuda.is_available(): std_model_lmeval.to('cuda')
+std_model_lmeval = HFLM(pretrained=std_model_lmeval)
+
+std_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=std_model_lmeval,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    batch_size=batch_size)
 
 
 print("Modified:")
 print(mod_results['results'])
 #
-# print("Standard:")
-# print(std_results['results'])
+print("Standard:")
+print(std_results['results'])
 
 
+# # Below: code for saving and loading the results 
+# import pickle
 
-import pickle
+# def save_dict(dictionary, name):
+#     with open(name+'.pkl', 'wb') as f: pickle.dump(dictionary, f)
 
-def save_dict(dictionary, name):
-    with open(name+'.pkl', 'wb') as f: pickle.dump(dictionary, f)
-# with open('saved_dictionary.pkl', 'rb') as f: loaded_dict = pickle.load(f)
+# # Utilities for loading dictionaries later on
+# import os
 
+# # Set the directory you want to work with
+# directory = "."  # The current directory
+# results = {}
 
+# # Loop through each file in the directory
+# for filename in os.listdir(directory):
+#     # Construct the full file path
+#     file_path = os.path.join(directory, filename)
+
+# # Check if it's a file
+# if os.path.isfile(file_path):
+#     # Do something with the file
+#     print(f"File: {filename}")
+#     with open(filename, 'rb') as f:
+#         results[filename] = pickle.load(f)['results']
+#     # You can read the file contents, process the file, etc
