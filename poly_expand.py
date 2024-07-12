@@ -289,3 +289,14 @@ def test_expanded_compare():
         assert(abs(correct-res) < 1e-10)
 
 # test_expanded_compare()
+
+"""
+TODO: get newton iteration coefficients
+
+    // # Initial estimate
+    // y = initial_inv_sqrt(x)
+    // # Iterations
+    // for _ in range(NEWTON_ITERATIONS):
+    //     y = (y * (3 - x * y**2)) / 2 = (3/2)*y - 1/2 * x * y^3
+    // return y
+"""
