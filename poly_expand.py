@@ -133,7 +133,7 @@ def get_poly_f(n=4):
 
 def test_expanded_f():
     poly_f = get_poly_f()
-    # print(poly_f.coeffs)
+    print("f", poly_f.coeffs)
 
     max = 10
     for i in range(-max, max):
@@ -170,7 +170,7 @@ def get_poly_g(index = 4):
 
 def test_expanded_g():
     poly_g = get_poly_g(4)
-    # print(poly_g.coeffs)
+    print("g", poly_g.coeffs)
 
     max = 10
     for i in range(-max, max):
@@ -224,7 +224,7 @@ def get_cheby_polys():
 
     print(back_to_cheb)
 
-get_cheby_polys()
+# get_cheby_polys()
 
 
 def get_comparison_cheb():
@@ -249,7 +249,7 @@ def get_comparison_cheb():
 
     print(composed_cheb)
 
-get_comparison_cheb()
+# get_comparison_cheb()
 
 def test_compose():
     poly_f = get_poly_f()

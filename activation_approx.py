@@ -44,7 +44,7 @@ def approx_compare(x, d=2):
         res, depth = compare_f(res, 4)
         total_depth += depth
 
-    print("approx compare depth", total_depth, d)
+    # print("approx compare depth", total_depth, d)
     return res  # , total_depth
 
 
@@ -53,10 +53,10 @@ def test_approx_compare():
         vals = range(-5, 5)
         for i in vals:
             for j in vals:
-                # print(i-j, approx_compare((i-j)/10), (i-j))
+                print(i-j, approx_compare((i-j)/10), (i-j))
                 assert(abs(max(i,j) - (j + (approx_compare((i-j)/10, d)+1)/2*(i-j))) < 1e-10)
 
-# test_approx_compare()
+test_approx_compare()
 
 def approx_sqrt(x, d):
     assert(0 <= x)
