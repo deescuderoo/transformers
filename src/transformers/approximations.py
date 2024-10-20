@@ -155,7 +155,7 @@ def approx_div(x, y, n):
 
     return N
 
-def ref_softmax(x, dim=None):
+def ref_softmax(x, dim=None): #use this
     # x[x <= -3.4028e+37] = 0
     print("input shape", x.shape)
     maxes = torch.max(x, dim, keepdim=True)[0]
@@ -165,7 +165,10 @@ def ref_softmax(x, dim=None):
 
 def approx_softmax(x, dim=None):
     correct_maxes = torch.max(x, dim, keepdim=True)[0]
-    # assert(correct_maxes == maxes)
+    print(correct_maxes.shape)
+    # output_max = "output_max.txt"
+    # with open(output_max, 'a') as file:
+    #     file.write('\nOne' + str(correct_maxes.tolist()) + '\n')
     maxes = correct_maxes
 
     EXP_ITERATIONS = 7

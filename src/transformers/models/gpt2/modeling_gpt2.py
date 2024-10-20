@@ -206,7 +206,9 @@ class GPT2Attention(nn.Module):
             attn_weights = attn_weights + attention_mask
 
         attn_weights = nn.functional.softmax(attn_weights, dim=-1)
-
+        # output_actual_softmax = "output_actual_softmax.txt"
+        # with open(output_actual_softmax, 'a') as file:
+        #     file.write(str(attn_weights.tolist()) + '\n')
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
         attn_weights = attn_weights.type(value.dtype)
         attn_weights = self.attn_dropout(attn_weights)

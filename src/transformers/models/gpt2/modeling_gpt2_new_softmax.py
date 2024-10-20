@@ -211,6 +211,9 @@ class GPT2Attention(nn.Module):
         # DANIEL: MODIFICATIONS HERE
         attn_weights = approx_softmax(attn_weights, dim=-1)
         # print(f"MAX:\n {torch.max(attn_weights)}")
+        # output_approx_softmax = "output_approx_softmax.txt"
+        # with open(output_approx_softmax, 'a') as file:
+        #     file.write(str(attn_weights.tolist()) + '\n')
 
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
         attn_weights = attn_weights.type(value.dtype)
