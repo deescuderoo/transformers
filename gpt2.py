@@ -217,7 +217,7 @@ mod_model.eval()
 if torch.cuda.is_available(): mod_model.to('cuda')
 
 
-prompt_text = "What is privacy preserving data sharing system?"
+prompt_text = "The secret for success is"
 
 ### Tokenize the prompt text
 input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
@@ -237,7 +237,7 @@ print(f"std output:\n{std_generated_text}")
 #print(f"gelu output:\n{gelu_generated_text}")
 
 #refln_output = refln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-#efln_generated_text = tokenizer.decode(refln_output[0], skip_special_tokens=True)
+#refln_generated_text = tokenizer.decode(refln_output[0], skip_special_tokens=True)
 #print("------------------------------------------\n")
 #print(f"refln output:\n{refln_generated_text}")
 
@@ -269,76 +269,76 @@ print(f"mod output:\n{mod_generated_text}")
 
 # LM EVAL using the evaluation harness
 
-# import lm_eval
+import lm_eval
+
+from lm_eval.models.huggingface import HFLM
+# Uncomment the desired tasks
+tasks = [
+    "lambada_openai",
+    "hellaswag",
+    "arc_easy",
+    # "wikitext",
+    # "glue"
+]
+batch_size = 8
+task_manager = lm_eval.tasks.TaskManager()
+
+
+# Modified model
+mod_model_lmeval = mod_model
+if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
+mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
+
+mod_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=mod_model_lmeval,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    batch_size=batch_size)
+
+
+# Standard model
+std_model_lmeval = std_model
+if torch.cuda.is_available(): std_model_lmeval.to('cuda')
+std_model_lmeval = HFLM(pretrained=std_model_lmeval)
+
+std_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=std_model_lmeval,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    batch_size=batch_size)
+
+
+print("Modified:")
+print(mod_results['results'])
 #
-# from lm_eval.models.huggingface import HFLM
-# # Uncomment the desired tasks
-# tasks = [
-#     "lambada_openai",
-#     "hellaswag",
-#     "arc_easy",
-#     # "wikitext",
-#     # "glue"
-#         ]
-# batch_size = 8
-# task_manager = lm_eval.tasks.TaskManager()
-#
-#
-# # Modified model
-# mod_model_lmeval = mod_model
-# if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
-# mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
-#
-# mod_results = lm_eval.simple_evaluate( # call simple_evaluate
-#     model=mod_model_lmeval,
-#     tasks=tasks,
-#     num_fewshot=0,
-#     task_manager=task_manager,
-#     batch_size=batch_size)
-#
-#
-# # Standard model
-# std_model_lmeval = std_model
-# if torch.cuda.is_available(): std_model_lmeval.to('cuda')
-# std_model_lmeval = HFLM(pretrained=std_model_lmeval)
-#
-# std_results = lm_eval.simple_evaluate( # call simple_evaluate
-#     model=std_model_lmeval,
-#     tasks=tasks,
-#     num_fewshot=0,
-#     task_manager=task_manager,
-#     batch_size=batch_size)
-#
-#
-# print("Modified:")
-# print(mod_results['results'])
-# #
-# print("Standard:")
-# print(std_results['results'])
-#
-#
-# # # Below: code for saving and loading the results
-# # import pickle
-#
-# # def save_dict(dictionary, name):
-# #     with open(name+'.pkl', 'wb') as f: pickle.dump(dictionary, f)
-#
-# # # Utilities for loading dictionaries later on
-# # import os
-#
-# # # Set the directory you want to work with
-# # directory = "."  # The current directory
-# # results = {}
-#
-# # # Loop through each file in the directory
-# # for filename in os.listdir(directory):
-# #     # Construct the full file path
-# #     file_path = os.path.join(directory, filename)
-#
-# # # Check if it's a file
-# # if os.path.isfile(file_path):
-# #     # Do something with the file
-# #     print(f"File: {filename}")
-# #     with open(filename, 'rb') as f:
-# #         results[filename] = pickle.load(f)['results']
-# #     # You can read the file contents, process the file, etc
+print("Standard:")
+print(std_results['results'])
+
+
+# # Below: code for saving and loading the results
+# import pickle
+
+# def save_dict(dictionary, name):
+#     with open(name+'.pkl', 'wb') as f: pickle.dump(dictionary, f)
+
+# # Utilities for loading dictionaries later on
+# import os
+
+# # Set the directory you want to work with
+# directory = "."  # The current directory
+# results = {}
+
+# # Loop through each file in the directory
+# for filename in os.listdir(directory):
+#     # Construct the full file path
+#     file_path = os.path.join(directory, filename)
+
+# # Check if it's a file
+# if os.path.isfile(file_path):
+#     # Do something with the file
+#     print(f"File: {filename}")
+#     with open(filename, 'rb') as f:
+#         results[filename] = pickle.load(f)['results']
+#     # You can read the file contents, process the file, etc
