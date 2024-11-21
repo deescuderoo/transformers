@@ -217,7 +217,7 @@ mod_model.eval()
 if torch.cuda.is_available(): mod_model.to('cuda')
 
 
-prompt_text = "Hi"
+prompt_text = "What is privacy preserving data sharing system?"
 
 ### Tokenize the prompt text
 input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
