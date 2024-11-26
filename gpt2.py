@@ -53,7 +53,7 @@ tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 # ./src/transformers/activations.py See that file for details
 
 new_config = GPT2Config.from_pretrained("gpt2", activation_function="gelu_puma")
-gelu_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+#gelu_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
 
 # CHANGING LAYER NORMALIZATION
 
@@ -173,19 +173,19 @@ class NewLayerNorm(nn.Module):
 # which is a ModuleList with the two layers that comprise
 # the feed forward block of the architecture.
 
-refln_model = GPT2LMHeadModel.from_pretrained("gpt2")
-gelu_aprxln_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+#refln_model = GPT2LMHeadModel.from_pretrained("gpt2")
+#gelu_aprxln_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
 
-for block in refln_model.transformer.h:
-    block.ln_1 = RefLayerNorm(block.ln_1)
-    block.ln_2 = RefLayerNorm(block.ln_2)
+#for block in refln_model.transformer.h:
+#    block.ln_1 = RefLayerNorm(block.ln_1)
+#    block.ln_2 = RefLayerNorm(block.ln_2)
 
-for block in gelu_aprxln_model.transformer.h:
-    block.ln_1 = NewLayerNorm(block.ln_1)
-    block.ln_2 = NewLayerNorm(block.ln_2)
+#for block in gelu_aprxln_model.transformer.h:
+#    block.ln_1 = NewLayerNorm(block.ln_1)
+#    block.ln_2 = NewLayerNorm(block.ln_2)
 
 
-gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
+#gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
 
 mod_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
 for block in mod_model.transformer.h:
@@ -201,17 +201,17 @@ for block in mod_model.transformer.h:
 std_model.eval()
 if torch.cuda.is_available(): std_model.to('cuda')
 
-gelu_model.eval()
-if torch.cuda.is_available(): gelu_model.to('cuda')
+#gelu_model.eval()
+#if torch.cuda.is_available(): gelu_model.to('cuda')
 
-refln_model.eval()
-if torch.cuda.is_available(): refln_model.to('cuda')
+#refln_model.eval()
+#if torch.cuda.is_available(): refln_model.to('cuda')
 
-gelu_aprxln_model.eval()
-if torch.cuda.is_available(): gelu_aprxln_model.to('cuda')
+#gelu_aprxln_model.eval()
+#if torch.cuda.is_available(): gelu_aprxln_model.to('cuda')
 
-gelu_stdln_aprxsm_model.eval()
-if torch.cuda.is_available(): gelu_stdln_aprxsm_model.to('cuda')
+#gelu_stdln_aprxsm_model.eval()
+#if torch.cuda.is_available(): gelu_stdln_aprxsm_model.to('cuda')
 
 mod_model.eval()
 if torch.cuda.is_available(): mod_model.to('cuda')
@@ -231,25 +231,25 @@ std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
 print("------------------------------------------\n")
 print(f"std output:\n{std_generated_text}")
 
-gelu_output = gelu_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-gelu_generated_text = tokenizer.decode(gelu_output[0], skip_special_tokens=True)
-print("------------------------------------------\n")
-print(f"gelu output:\n{gelu_generated_text}")
+#gelu_output = gelu_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+#gelu_generated_text = tokenizer.decode(gelu_output[0], skip_special_tokens=True)
+#print("------------------------------------------\n")
+#print(f"gelu output:\n{gelu_generated_text}")
 
-refln_output = refln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-refln_generated_text = tokenizer.decode(refln_output[0], skip_special_tokens=True)
-print("------------------------------------------\n")
-print(f"refln output:\n{refln_generated_text}")
+#refln_output = refln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+#refln_generated_text = tokenizer.decode(refln_output[0], skip_special_tokens=True)
+#print("------------------------------------------\n")
+#print(f"refln output:\n{refln_generated_text}")
 
-gelu_aprxln_output = gelu_aprxln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-gelu_aprxln_generated_text = tokenizer.decode(gelu_aprxln_output[0], skip_special_tokens=True)
-print("------------------------------------------\n")
-print(f"gelu_aprxln output:\n{gelu_aprxln_generated_text}")
+#gelu_aprxln_output = gelu_aprxln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+#gelu_aprxln_generated_text = tokenizer.decode(gelu_aprxln_output[0], skip_special_tokens=True)
+#print("------------------------------------------\n")
+#print(f"gelu_aprxln output:\n{gelu_aprxln_generated_text}")
 
-gelu_stdln_aprxsm_output = gelu_stdln_aprxsm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-gelu_stdln_aprxsm_generated_text = tokenizer.decode(gelu_stdln_aprxsm_output[0], skip_special_tokens=True)
-print("------------------------------------------\n")
-print(f"gelu_stdln_aprxsm output:\n{gelu_stdln_aprxsm_generated_text}")
+#gelu_stdln_aprxsm_output = gelu_stdln_aprxsm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+#gelu_stdln_aprxsm_generated_text = tokenizer.decode(gelu_stdln_aprxsm_output[0], skip_special_tokens=True)
+#print("------------------------------------------\n")
+#print(f"gelu_stdln_aprxsm output:\n{gelu_stdln_aprxsm_generated_text}")
 
 mod_output = mod_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 mod_generated_text = tokenizer.decode(mod_output[0], skip_special_tokens=True)
