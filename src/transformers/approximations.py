@@ -163,7 +163,7 @@ def ref_softmax(x, dim=None):
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     return x_exp/x_exp_sum
 
-def approx_softmax(x, dim=None):
+def approx_softmax(x, layer_id, dim=None):
     correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
     maxes = correct_maxes

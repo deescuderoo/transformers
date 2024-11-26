@@ -209,7 +209,7 @@ class GPT2Attention(nn.Module):
 
         # attn_weights = nn.functional.softmax(attn_weights, dim=-1)
         # DANIEL: MODIFICATIONS HERE
-        attn_weights = approx_softmax(attn_weights, dim=-1)
+        attn_weights = approx_softmax(attn_weights, self.layer_idx, dim=-1)
         # print(f"MAX:\n {torch.max(attn_weights)}")
 
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
