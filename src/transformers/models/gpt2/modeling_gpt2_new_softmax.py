@@ -48,7 +48,7 @@ from ...utils import (
 from ...utils.model_parallel_utils import assert_device_map, get_device_map
 from .configuration_gpt2 import GPT2Config
 
-from ...approximations import approx_softmax
+from ...approximations import approx_softmax, interm_softmax
 
 
 logger = logging.get_logger(__name__)
@@ -209,6 +209,7 @@ class GPT2Attention(nn.Module):
 
         # attn_weights = nn.functional.softmax(attn_weights, dim=-1)
         # DANIEL: MODIFICATIONS HERE
+        # attn_weights = interm_softmax(attn_weights, self.layer_idx, dim=-1)
         attn_weights = approx_softmax(attn_weights, self.layer_idx, dim=-1)
         # print(f"MAX:\n {torch.max(attn_weights)}")
 
