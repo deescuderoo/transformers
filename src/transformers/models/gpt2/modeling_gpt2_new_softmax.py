@@ -27,6 +27,7 @@ from torch import nn
 from torch.cuda.amp import autocast
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
+from tests.repo_utils.test_check_copies import REFERENCE_CODE
 from ...activations import ACT2FN
 from ...modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
@@ -48,8 +49,7 @@ from ...utils import (
 from ...utils.model_parallel_utils import assert_device_map, get_device_map
 from .configuration_gpt2 import GPT2Config
 
-from ...approximations import approx_softmax
-
+from ...approximations import approx_softmax, approx_softmax_store_in_file, ref_softmax
 
 logger = logging.get_logger(__name__)
 
@@ -209,9 +209,8 @@ class GPT2Attention(nn.Module):
 
         # attn_weights = nn.functional.softmax(attn_weights, dim=-1)
         # DANIEL: MODIFICATIONS HERE
-        attn_weights = approx_softmax(attn_weights, self.layer_idx, dim=-1)
+        attn_weights = approx_softmax(attn_weights, dim=-1)
         # print(f"MAX:\n {torch.max(attn_weights)}")
-
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
         attn_weights = attn_weights.type(value.dtype)
         attn_weights = self.attn_dropout(attn_weights)
@@ -260,7 +259,7 @@ class GPT2Attention(nn.Module):
             # Apply the attention mask
             attn_weights = attn_weights + attention_mask
 
-        attn_weights = nn.functional.softmax(attn_weights, dim=-1)
+        attn_weights = approx_softmax(attn_weights, dim=-1)
 
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op if otherwise
         if attn_weights.dtype != torch.float32:

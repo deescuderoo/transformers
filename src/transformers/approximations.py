@@ -1,6 +1,6 @@
 from math import ceil, tanh, log2, sqrt, pi
 import scipy.special
-import torch
+import torch, os
 
 def compare_f(x, n):
     res = 0
@@ -155,6 +155,38 @@ def approx_div(x, y, n):
 
     return N
 
+# Ensure the folder exists
+OUTPUT_FOLDER_1 = "output_cycles_1"
+OUTPUT_FOLDER_2 = "output_cycles_2"
+os.makedirs(OUTPUT_FOLDER_1, exist_ok=True)
+os.makedirs(OUTPUT_FOLDER_2, exist_ok=True)
+# Initialize the global variable
+current_cycle = 0  # Default value is now 0
+
+def find_max_cycle_1():
+    global current_cycle
+    max_cycle = 0
+    for filename in os.listdir(OUTPUT_FOLDER_1):
+        if filename.startswith("output_max_cycle_") and filename.endswith(".txt"):
+            try:
+                cycle_number = int(filename.split("_")[-1].split(".")[0])
+                max_cycle = max(max_cycle, cycle_number)
+            except ValueError:
+                continue
+    current_cycle = max_cycle
+
+def find_max_cycle_2():
+    global current_cycle
+    max_cycle = 0
+    for filename in os.listdir(OUTPUT_FOLDER_2):
+        if filename.startswith("output_max_cycle_") and filename.endswith(".txt"):
+            try:
+                cycle_number = int(filename.split("_")[-1].split(".")[0])
+                max_cycle = max(max_cycle, cycle_number)
+            except ValueError:
+                continue
+    current_cycle = max_cycle
+
 layer0_array=[1.8493261337280273, 10.321573257446289, 1.0337244272232056, 11.179471969604492, 6.565133094787598, 16.084802627563477, 3.021239757537842, 9.312780380249023, 10.720375061035156, 12.07174301147461, 10.763772964477539, 10.797805786132812]
 layer1_array=[4.33711051940918, 3.385294198989868, 1.053083896636963, 2.346316337585449, 0.9965879321098328, 4.807539463043213, 4.680234909057617, 1.9316093921661377, 2.231010913848877, 2.1602818965911865, 2.092066764831543, 8.487981796264648]
 layer2_array=[1.7087633609771729, 2.9535627365112305, 4.604798793792725, 2.7798538208007812, 3.2145142555236816, 3.3662657737731934, 2.259106159210205, 2.492807388305664, 3.4144763946533203, 2.8978257179260254, 2.2755203247070312, 2.1004021167755127]
@@ -182,18 +214,86 @@ tensors[9] = torch.tensor(layer9_array).reshape(1, 12, 1, 1)
 tensors[10] = torch.tensor(layer10_array).reshape(1, 12, 1, 1)
 tensors[11] = torch.tensor(layer11_array).reshape(1, 12, 1, 1)
 
-def ref_softmax(x, dim=None):
+def ref_softmax(x, layer_id, dim=None):
     # x[x <= -3.4028e+37] = 0
     print("input shape", x.shape)
+    global current_cycle
+    find_max_cycle_1()
+    print("Current cycle", current_cycle)
+    output_max = os.path.join(OUTPUT_FOLDER_1, f"output_max_cycle_{current_cycle}.txt")
+    if layer_id == 0:
+        if current_cycle > 0 or os.path.exists(output_max):
+            current_cycle += 1
+            output_max = os.path.join(OUTPUT_FOLDER_1, f"output_max_cycle_{current_cycle}.txt")
+        with open(output_max, 'w') as file:
+            file.write(f"Cycle {current_cycle} - Layer Outputs:\n")
+    print("Layer id: ", layer_id)
+    print("Input shape", x.shape)
     maxes = torch.max(x, dim, keepdim=True)[0]
+    print("Max shape", maxes.shape)
+    with open(output_max, 'a') as file:
+        file.write(f'\nLayer {layer_id}: {maxes.flatten().tolist()}\n')
     x_exp = torch.exp(x-maxes)
+    with open(output_max, 'a') as file:
+        file.write(f'\nExp {layer_id}: {x_exp.flatten().tolist()}\n')
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     return x_exp/x_exp_sum
 
-def approx_softmax(x, layer_id, dim=None):
-    # correct_maxes = torch.max(x, dim, keepdim=True)[0]
+def approx_softmax_store_in_file(x, layer_id, dim=None):
+    #this function is used to store the max value in a file, which was later used to determine statistics
+    global current_cycle
+    find_max_cycle_2()
+    print("Current cycle", current_cycle)
+    output_max = os.path.join(OUTPUT_FOLDER_2, f"output_max_cycle_{current_cycle}.txt")
+    if layer_id == 0:
+        if current_cycle > 0 or os.path.exists(output_max):
+            current_cycle += 1
+            output_max = os.path.join(OUTPUT_FOLDER_2, f"output_max_cycle_{current_cycle}.txt")
+        with open(output_max, 'w') as file:
+            file.write(f"Cycle {current_cycle} - Layer Outputs:\n")
+    print("Layer id: ", layer_id)
+    print("Input shape", x.shape)
+    maxes = torch.max(x, dim, keepdim=True)[0]
+    print("Max shape", maxes.shape)
+    with open(output_max, 'a') as file:
+        file.write(f'\nLayer {layer_id}: {maxes.flatten().tolist()}\n')
+    EXP_ITERATIONS = 7
+    x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
+    # x_exp = torch.exp(x-maxes)
+    x_exp[x <= -3.4028e+37] = 0
+    with open(output_max, 'a') as file:
+        file.write(f'\nExp {layer_id}: {x_exp.flatten().tolist()}\n')
+    # assert torch.all(x_exp <= 1)
+    # x_exp = torch.exp(x-maxes)
+
+    x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
+
+    # return x_exp/x_exp_sum
+
+    # Division
+    # out = x_exp/x_exp_sum
+    normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
+
+    # assert torch.all(x_exp_sum / normalizer <= 1)
+
+    # norm: divide by length so that quotient is <1 (denominator
+    # becomes the mean)
+    G_ITERATIONS = 7
+    if torch.cuda.is_available():
+        normalizer = normalizer.to('cuda')
+        # print(f"Device: {normalizer.device}")
+
+    out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
+                     G_ITERATIONS)
+
+    # Useful for handpicking initial approx.
+    # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
+    return out
+
+def approx_softmax(x, dim=None):
+    correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
-    maxes = tensors[layer_id]
+    maxes = correct_maxes
 
     EXP_ITERATIONS = 7
     x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
