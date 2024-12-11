@@ -200,42 +200,36 @@ layer9_array=[5.831937313079834, 6.704681396484375, 4.681728363037109, 3.1841592
 layer10_array=[4.52237606048584, 7.927225112915039, 6.176588535308838, 6.088727951049805, 5.833307266235352, 4.04454231262207, 5.550886631011963, 6.582158088684082, 5.128731727600098, 5.044299125671387, 5.436607837677002, 7.902202606201172]
 layer11_array=[4.992722511291504, 5.467639923095703, 5.714563846588135, 4.192873001098633, 4.425979137420654, 6.185069561004639, 5.388833045959473, 6.145012855529785, 19.679534912109375, 7.636826515197754, 7.3761444091796875, 43.82441329956055]
 
-tensors = {}
-tensors[0] = torch.tensor(layer0_array).reshape(1, 12, 1, 1)
-tensors[1] = torch.tensor(layer1_array).reshape(1, 12, 1, 1)
-tensors[2] = torch.tensor(layer2_array).reshape(1, 12, 1, 1)
-tensors[3] = torch.tensor(layer3_array).reshape(1, 12, 1, 1)
-tensors[4] = torch.tensor(layer4_array).reshape(1, 12, 1, 1)
-tensors[5] = torch.tensor(layer5_array).reshape(1, 12, 1, 1)
-tensors[6] = torch.tensor(layer6_array).reshape(1, 12, 1, 1)
-tensors[7] = torch.tensor(layer7_array).reshape(1, 12, 1, 1)
-tensors[8] = torch.tensor(layer8_array).reshape(1, 12, 1, 1)
-tensors[9] = torch.tensor(layer9_array).reshape(1, 12, 1, 1)
-tensors[10] = torch.tensor(layer10_array).reshape(1, 12, 1, 1)
-tensors[11] = torch.tensor(layer11_array).reshape(1, 12, 1, 1)
+device = torch.device("cuda")
 
-def ref_softmax(x, layer_id, dim=None):
+tensors = {}
+tensors[0] = torch.tensor(layer0_array, device=device).reshape(1, 12, 1, 1)
+tensors[1] = torch.tensor(layer1_array, device=device).reshape(1, 12, 1, 1)
+tensors[2] = torch.tensor(layer2_array, device=device).reshape(1, 12, 1, 1)
+tensors[3] = torch.tensor(layer3_array, device=device).reshape(1, 12, 1, 1)
+tensors[4] = torch.tensor(layer4_array, device=device).reshape(1, 12, 1, 1)
+tensors[5] = torch.tensor(layer5_array, device=device).reshape(1, 12, 1, 1)
+tensors[6] = torch.tensor(layer6_array, device=device).reshape(1, 12, 1, 1)
+tensors[7] = torch.tensor(layer7_array, device=device).reshape(1, 12, 1, 1)
+tensors[8] = torch.tensor(layer8_array, device=device).reshape(1, 12, 1, 1)
+tensors[9] = torch.tensor(layer9_array, device=device).reshape(1, 12, 1, 1)
+tensors[10] = torch.tensor(layer10_array, device=device).reshape(1, 12, 1, 1)
+tensors[11] = torch.tensor(layer11_array, device=device).reshape(1, 12, 1, 1)
+
+def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
-    print("input shape", x.shape)
-    global current_cycle
-    find_max_cycle_1()
-    print("Current cycle", current_cycle)
-    output_max = os.path.join(OUTPUT_FOLDER_1, f"output_max_cycle_{current_cycle}.txt")
-    if layer_id == 0:
-        if current_cycle > 0 or os.path.exists(output_max):
-            current_cycle += 1
-            output_max = os.path.join(OUTPUT_FOLDER_1, f"output_max_cycle_{current_cycle}.txt")
-        with open(output_max, 'w') as file:
-            file.write(f"Cycle {current_cycle} - Layer Outputs:\n")
-    print("Layer id: ", layer_id)
-    print("Input shape", x.shape)
+    # print("input shape", x.shape)
     maxes = torch.max(x, dim, keepdim=True)[0]
-    print("Max shape", maxes.shape)
-    with open(output_max, 'a') as file:
-        file.write(f'\nLayer {layer_id}: {maxes.flatten().tolist()}\n')
     x_exp = torch.exp(x-maxes)
-    with open(output_max, 'a') as file:
-        file.write(f'\nExp {layer_id}: {x_exp.flatten().tolist()}\n')
+    x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
+    return x_exp/x_exp_sum
+
+def interm_softmax(x, layer_id, dim=None):
+    # x[x <= -3.4028e+37] = 0
+    # print("input shape", x.shape)
+    # maxes = torch.max(x, dim, keepdim=True)[0]
+    maxes = tensors[layer_id]
+    x_exp = torch.exp(x-maxes)
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     return x_exp/x_exp_sum
 
@@ -290,10 +284,10 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
 
-def approx_softmax(x, dim=None):
+def approx_softmax(x, layer_id, dim=None):
     correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
-    maxes = correct_maxes
+    maxes = tensors[layer_id]
 
     EXP_ITERATIONS = 7
     x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
