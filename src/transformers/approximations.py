@@ -283,20 +283,44 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     # Useful for handpicking initial approx.
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
+nan_logged = False
 
 def approx_softmax(x, layer_id, dim=None):
+    global nan_logged
     correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
     maxes = tensors[layer_id]
-
+    x = x.double()
+    maxes = maxes.double()
     EXP_ITERATIONS = 7
-    x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
+    x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
+    x_exp = approx_exp(x_diff, EXP_ITERATIONS)
     # x_exp = torch.exp(x-maxes)
+    if not nan_logged and torch.isnan(x_exp).any():
+        with open("nan_debug_log.txt", "a") as log_file:
+            log_file.write(f"NaN detected in x_exp for layer_id: {layer_id}\n")
+            log_file.write(f"Input x: {x.tolist()}\n")
+            log_file.write(f"Input x shape: {x.shape}\n")
+            log_file.write(f"x_diff: {x_diff.tolist()}\n")
+            log_file.write(f"x_exp: {x_exp.tolist()}\n\n")
+        nan_logged = True
+
     x_exp[x <= -3.4028e+37] = 0
     # assert torch.all(x_exp <= 1)
     # x_exp = torch.exp(x-maxes)
 
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
+    if torch.any(x_exp_sum == 0):  # Avoid division by zero
+        x_exp_sum += 1e-8
+    if not nan_logged and torch.isnan(x_exp_sum).any():
+        with open("nan_debug_log.txt", "a") as log_file:
+            log_file.write(f"NaN detected in x_exp_sum for layer_id: {layer_id}\n")
+            log_file.write(f"Input x: {x.tolist()}\n")
+            log_file.write(f"Input x shape: {x.shape}\n")
+            log_file.write(f"x_diff: {x_diff.tolist()}\n")
+            log_file.write(f"x_exp: {x_exp.tolist()}\n")
+            log_file.write(f"x_exp_sum: {x_exp_sum.tolist()}\n\n")
+        nan_logged = True
 
     # return x_exp/x_exp_sum
 
@@ -315,6 +339,15 @@ def approx_softmax(x, layer_id, dim=None):
 
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
+    if not nan_logged and torch.isnan(out).any():
+        with open("nan_debug_log.txt", "a") as log_file:
+            log_file.write(f"NaN detected in out for layer_id: {layer_id}\n")
+            log_file.write(f"Input x shape: {x.shape}\n")
+            log_file.write(f"x - maxes: {x_diff.tolist()}\n")
+            log_file.write(f"x_exp: {x_exp.tolist()}\n")
+            log_file.write(f"x_exp_sum: {x_exp_sum.tolist()}\n")
+            log_file.write(f"Output out: {out.tolist()}\n\n")
+        nan_logged = True
 
     # Useful for handpicking initial approx.
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
