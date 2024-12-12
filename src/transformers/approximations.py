@@ -156,29 +156,15 @@ def approx_div(x, y, n):
     return N
 
 # Ensure the folder exists
-OUTPUT_FOLDER_1 = "output_cycles_1"
-OUTPUT_FOLDER_2 = "output_cycles_2"
-os.makedirs(OUTPUT_FOLDER_1, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER_2, exist_ok=True)
+OUTPUT_FOLDER = "output_cycles"
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 # Initialize the global variable
 current_cycle = 0  # Default value is now 0
 
-def find_max_cycle_1():
+def find_max_cycle():
     global current_cycle
     max_cycle = 0
-    for filename in os.listdir(OUTPUT_FOLDER_1):
-        if filename.startswith("output_max_cycle_") and filename.endswith(".txt"):
-            try:
-                cycle_number = int(filename.split("_")[-1].split(".")[0])
-                max_cycle = max(max_cycle, cycle_number)
-            except ValueError:
-                continue
-    current_cycle = max_cycle
-
-def find_max_cycle_2():
-    global current_cycle
-    max_cycle = 0
-    for filename in os.listdir(OUTPUT_FOLDER_2):
+    for filename in os.listdir(OUTPUT_FOLDER):
         if filename.startswith("output_max_cycle_") and filename.endswith(".txt"):
             try:
                 cycle_number = int(filename.split("_")[-1].split(".")[0])
@@ -236,13 +222,13 @@ def interm_softmax(x, layer_id, dim=None):
 def approx_softmax_store_in_file(x, layer_id, dim=None):
     #this function is used to store the max value in a file, which was later used to determine statistics
     global current_cycle
-    find_max_cycle_2()
+    find_max_cycle()
     print("Current cycle", current_cycle)
-    output_max = os.path.join(OUTPUT_FOLDER_2, f"output_max_cycle_{current_cycle}.txt")
+    output_max = os.path.join(OUTPUT_FOLDER, f"output_max_cycle_{current_cycle}.txt")
     if layer_id == 0:
         if current_cycle > 0 or os.path.exists(output_max):
             current_cycle += 1
-            output_max = os.path.join(OUTPUT_FOLDER_2, f"output_max_cycle_{current_cycle}.txt")
+            output_max = os.path.join(OUTPUT_FOLDER, f"output_max_cycle_{current_cycle}.txt")
         with open(output_max, 'w') as file:
             file.write(f"Cycle {current_cycle} - Layer Outputs:\n")
     print("Layer id: ", layer_id)
@@ -283,9 +269,10 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     # Useful for handpicking initial approx.
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
+
 nan_logged = False
 
-def approx_softmax(x, layer_id, dim=None):
+def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     global nan_logged
     correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
