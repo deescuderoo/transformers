@@ -161,6 +161,20 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 # Initialize the global variable
 current_cycle = 0  # Default value is now 0
 
+# Global variables
+OUTPUT_FOLDER = "output_cycles_2"
+LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
+SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
+
+# Ensure the folder exists
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+# Initialize the max values file if not already present
+if not os.path.exists(LAYER_MAX_VALUES_FILE):
+    with open(LAYER_MAX_VALUES_FILE, 'w') as file:
+        for layer_id in range(12):  # Assuming 12 layers
+            file.write(f"Layer {layer_id}: {[float('-inf')] * 12}\n")  # Initialize with -inf
+
 def find_max_cycle():
     global current_cycle
     max_cycle = 0
@@ -219,27 +233,58 @@ def interm_softmax(x, layer_id, dim=None):
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     return x_exp/x_exp_sum
 
+import os
+import torch
+
+# Global variables
+OUTPUT_FOLDER = "output_cycles_2"
+LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
+SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
+
+# Ensure the folder exists
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+# Initialize the max values file if not already present
+if not os.path.exists(LAYER_MAX_VALUES_FILE):
+    with open(LAYER_MAX_VALUES_FILE, 'w') as file:
+        for layer_id in range(12):  # Assuming 12 layers
+            file.write(f"Layer {layer_id}: {[float('-inf')] * 12}\n")  # Initialize with -inf
+
+
 def approx_softmax_store_in_file(x, layer_id, dim=None):
-    #this function is used to store the max value in a file, which was later used to determine statistics
-    global current_cycle
-    find_max_cycle()
-    #print("Current cycle", current_cycle)
-    output_max = os.path.join(OUTPUT_FOLDER, f"output_max_cycle_{current_cycle}.txt")
-    if layer_id == 0:
-        if current_cycle > 0 or os.path.exists(output_max):
-            current_cycle += 1
-            output_max = os.path.join(OUTPUT_FOLDER, f"output_max_cycle_{current_cycle}.txt")
-        with open(output_max, 'w') as file:
-            file.write(f"Cycle {current_cycle} - Layer Outputs:\n")
+    # Get max values along the specified dimension
     maxes = torch.max(x, dim, keepdim=True)[0]
-    with open(output_max, 'a') as file:
-        file.write(f'\nLayer {layer_id}: {maxes.flatten().tolist()}\n Input shape: {x.shape}, Max shape: {maxes.shape}\n')
+    maxes_list = maxes.flatten().tolist()
+
+    if len(maxes_list) == 12:  # Ensure the max array has 12 values
+        # Read current max values from the file
+        with open(LAYER_MAX_VALUES_FILE, 'r') as file:
+            lines = file.readlines()
+
+        # Parse current max values for the layer
+        current_max_array = eval(lines[layer_id].strip().split(":")[1])
+
+        # Update max values for each position
+        updated_max_array = [
+            max(current, new) for current, new in zip(current_max_array, maxes_list)
+        ]
+
+        # Write the updated max values back to the file
+        lines[layer_id] = f"Layer {layer_id}: {updated_max_array}\n"
+        with open(LAYER_MAX_VALUES_FILE, 'w') as file:
+            file.writelines(lines)
+
+    else:  # Handle shape mismatches
+        with open(SHAPE_MISMATCH_FILE, 'a') as file:
+            file.write(f"Layer {layer_id}:\n")
+            file.write(f"Max shape: {len(maxes_list)}, Input shape: {x.shape}\n")
+            file.write(f"Max values: {maxes_list}\n\n")
+
+    # Perform the rest of the softmax approximation as usual
     EXP_ITERATIONS = 7
     x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
     # x_exp = torch.exp(x-maxes)
     x_exp[x <= -3.4028e+37] = 0
-    with open(output_max, 'a') as file:
-        file.write(f'\nExp {layer_id}: {x_exp.flatten().tolist()}\n')
     # assert torch.all(x_exp <= 1)
     # x_exp = torch.exp(x-maxes)
 
