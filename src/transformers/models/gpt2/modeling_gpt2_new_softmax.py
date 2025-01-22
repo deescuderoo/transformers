@@ -27,7 +27,6 @@ from torch import nn
 from torch.cuda.amp import autocast
 from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
 
-from tests.repo_utils.test_check_copies import REFERENCE_CODE
 from ...activations import ACT2FN
 from ...modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
