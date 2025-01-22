@@ -1,6 +1,6 @@
 from math import ceil, tanh, log2, sqrt, pi
 import scipy.special
-import torch, os
+import torch, os, ast
 
 def compare_f(x, n):
     res = 0
@@ -262,7 +262,10 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
             lines = file.readlines()
 
         # Parse current max values for the layer
-        current_max_array = eval(lines[layer_id].strip().split(":")[1])
+        current_max_array = [
+            float('inf') if v == 'inf' else float('-inf') if v == '-inf' else float(v)
+            for v in ast.literal_eval(lines[layer_id].strip().split(":")[1])
+        ]
 
         # Update max values for each position
         updated_max_array = [
