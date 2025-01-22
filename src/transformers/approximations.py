@@ -223,7 +223,7 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     #this function is used to store the max value in a file, which was later used to determine statistics
     global current_cycle
     find_max_cycle()
-    print("Current cycle", current_cycle)
+    #print("Current cycle", current_cycle)
     output_max = os.path.join(OUTPUT_FOLDER, f"output_max_cycle_{current_cycle}.txt")
     if layer_id == 0:
         if current_cycle > 0 or os.path.exists(output_max):
