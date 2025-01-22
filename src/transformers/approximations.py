@@ -231,12 +231,9 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
             output_max = os.path.join(OUTPUT_FOLDER, f"output_max_cycle_{current_cycle}.txt")
         with open(output_max, 'w') as file:
             file.write(f"Cycle {current_cycle} - Layer Outputs:\n")
-    print("Layer id: ", layer_id)
-    print("Input shape", x.shape)
     maxes = torch.max(x, dim, keepdim=True)[0]
-    print("Max shape", maxes.shape)
     with open(output_max, 'a') as file:
-        file.write(f'\nLayer {layer_id}: {maxes.flatten().tolist()}\n')
+        file.write(f'\nLayer {layer_id}: {maxes.flatten().tolist()}\n Input shape: {x.shape}, Max shape: {maxes.shape}\n')
     EXP_ITERATIONS = 7
     x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
     # x_exp = torch.exp(x-maxes)
