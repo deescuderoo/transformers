@@ -261,8 +261,8 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
         with open(LAYER_MAX_VALUES_FILE, 'r') as file:
             lines = file.readlines()
 
-        # Parse current max values for the layer
-        current_max_array = eval(lines[layer_id].strip().split(":")[1])
+        # Parse current max values for the layer (split by ':' and strip extra spaces)
+        current_max_array = list(map(float, lines[layer_id].strip().split(":")[1].strip('[]').split(',')))
 
         # Update max values for each position
         updated_max_array = [
