@@ -274,7 +274,7 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
-    "lambada_openai",
+    # "lambada_openai",
     "hellaswag",
     "arc_easy",
     # "wikitext",
