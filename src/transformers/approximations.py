@@ -263,8 +263,8 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
 
         # Parse current max values for the layer
         current_max_array = [
-            float('inf') if v == 'inf' else float('-inf') if v == '-inf' else float(v)
-            for v in ast.literal_eval(lines[layer_id].strip().split(":")[1])
+            float('inf') if v.strip() == 'inf' else float('-inf') if v.strip() == '-inf' else float(v)
+            for v in ast.literal_eval(lines[layer_id].strip().split(":")[1].replace('inf', '"inf"').replace('-inf', '"-inf"'))
         ]
 
         # Update max values for each position
