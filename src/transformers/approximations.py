@@ -173,7 +173,7 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 if not os.path.exists(LAYER_MAX_VALUES_FILE):
     with open(LAYER_MAX_VALUES_FILE, 'w') as file:
         for layer_id in range(12):  # Assuming 12 layers
-            file.write(f"Layer {layer_id}: {[float('-inf')] * 12}\n")  # Initialize with -inf
+            file.write(f"Layer {layer_id}: {[-10000] * 12}\n")  # Use -10000
 
 def find_max_cycle():
     global current_cycle
@@ -262,10 +262,7 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
             lines = file.readlines()
 
         # Parse current max values for the layer
-        current_max_array = [
-            float('inf') if v.strip() == 'inf' else float('-inf') if v.strip() == '-inf' else float(v)
-            for v in ast.literal_eval(lines[layer_id].strip().split(":")[1].replace('inf', '"inf"').replace('-inf', '"-inf"'))
-        ]
+        current_max_array = eval(lines[layer_id].strip().split(":")[1])
 
         # Update max values for each position
         updated_max_array = [
