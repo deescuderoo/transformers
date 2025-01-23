@@ -214,18 +214,18 @@ layer11_array=[5.02396297454834, 4.904455661773682, 5.005637168884277, 3.7745230
 device = torch.device("cuda")
 
 tensors = {}
-tensors[0] = torch.tensor(layer0_array).reshape(1, 12, 1, 1)
-tensors[1] = torch.tensor(layer1_array).reshape(1, 12, 1, 1)
-tensors[2] = torch.tensor(layer2_array).reshape(1, 12, 1, 1)
-tensors[3] = torch.tensor(layer3_array).reshape(1, 12, 1, 1)
-tensors[4] = torch.tensor(layer4_array).reshape(1, 12, 1, 1)
-tensors[5] = torch.tensor(layer5_array).reshape(1, 12, 1, 1)
-tensors[6] = torch.tensor(layer6_array).reshape(1, 12, 1, 1)
-tensors[7] = torch.tensor(layer7_array).reshape(1, 12, 1, 1)
-tensors[8] = torch.tensor(layer8_array).reshape(1, 12, 1, 1)
-tensors[9] = torch.tensor(layer9_array).reshape(1, 12, 1, 1)
-tensors[10] = torch.tensor(layer10_array).reshape(1, 12, 1, 1)
-tensors[11] = torch.tensor(layer11_array).reshape(1, 12, 1, 1)
+tensors[0] = torch.tensor(layer0_array, device=device).reshape(1, 12, 1, 1)
+tensors[1] = torch.tensor(layer1_array, device=device).reshape(1, 12, 1, 1)
+tensors[2] = torch.tensor(layer2_array, device=device).reshape(1, 12, 1, 1)
+tensors[3] = torch.tensor(layer3_array, device=device).reshape(1, 12, 1, 1)
+tensors[4] = torch.tensor(layer4_array, device=device).reshape(1, 12, 1, 1)
+tensors[5] = torch.tensor(layer5_array, device=device).reshape(1, 12, 1, 1)
+tensors[6] = torch.tensor(layer6_array, device=device).reshape(1, 12, 1, 1)
+tensors[7] = torch.tensor(layer7_array, device=device).reshape(1, 12, 1, 1)
+tensors[8] = torch.tensor(layer8_array, device=device).reshape(1, 12, 1, 1)
+tensors[9] = torch.tensor(layer9_array, device=device).reshape(1, 12, 1, 1)
+tensors[10] = torch.tensor(layer10_array, device=device).reshape(1, 12, 1, 1)
+tensors[11] = torch.tensor(layer11_array, device=device).reshape(1, 12, 1, 1)
 
 def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
