@@ -331,6 +331,16 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
     maxes = tensors[layer_id]
+
+    # Check if maxes shape matches the required shape
+    expected_shape = torch.Size([1, x.shape[1], x.shape[2], 1])  # Example: [1, 12, 56, 1]
+    if maxes.shape != expected_shape:
+        print(f"Shape mismatch for layer {layer_id}. Expected {expected_shape}, got {maxes.shape}.")
+
+        # Use fallback mean to create a replacement tensor with the correct shape
+        fallback_value = 1.4125490100931677  # You can switch to fallback_min or fallback_max as needed
+        maxes = torch.full(expected_shape, fallback_value, dtype=x.dtype, device=x.device)
+
     x = x.double()
     maxes = maxes.double()
     EXP_ITERATIONS = 7
