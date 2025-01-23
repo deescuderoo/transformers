@@ -1,6 +1,7 @@
 from math import ceil, tanh, log2, sqrt, pi
 import scipy.special
 import torch, os, ast
+import numpy as np
 
 def compare_f(x, n):
     res = 0
@@ -276,8 +277,8 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     else:  # Handle shape mismatches
         with open(SHAPE_MISMATCH_FILE, 'a') as file:
             file.write(f"Layer {layer_id}:\n")
-            file.write(f"Max shape: {len(maxes_list)}, Input shape: {x.shape}\n")
-            file.write(f"Max values: {maxes_list}\n\n")
+            file.write(f"Input shape: {x.shape}, Maxes summary: mean={np.mean(maxes_list):.2f}, min={np.min(maxes_list):.2f}, max={np.max(maxes_list):.2f}\n\n")
+
 
     # Perform the rest of the softmax approximation as usual
     EXP_ITERATIONS = 7
