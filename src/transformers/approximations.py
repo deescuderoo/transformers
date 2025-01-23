@@ -155,14 +155,11 @@ def approx_div(x, y, n):
 
     return N
 
-# Ensure the folder exists
-OUTPUT_FOLDER = "output_cycles"
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 # Initialize the global variable
 current_cycle = 0  # Default value is now 0
 
 # Global variables
-OUTPUT_FOLDER = "output_cycles_2"
+OUTPUT_FOLDER = "output_cycles"
 LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
 SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
 
