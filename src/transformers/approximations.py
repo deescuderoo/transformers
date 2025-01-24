@@ -252,6 +252,18 @@ OUTPUT_FOLDER = "output_cycles_2"
 LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
 SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
 
+# Global file path for fallback logs
+FALLBACK_LOG_FILE = "fallback_counts_log.txt"
+
+# Initialize fallback log file
+with open(FALLBACK_LOG_FILE, 'w') as file:
+    file.write("Fallback counts per layer:\n")
+    for layer_id in range(12):  # Assuming 12 layers
+        file.write(f"Layer {layer_id}: 0 fallbacks\n")
+
+# Global counter to track fallback usage per layer
+fallback_counter = [0] * 12  # Assuming 12 layers per input
+
 # Ensure the folder exists
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -330,13 +342,22 @@ nan_logged = False
 def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
+    global fallback_counter
     maxes = tensors[layer_id]
 
     # Check if maxes shape matches the required shape
     expected_shape = torch.Size([1, x.shape[1], x.shape[2], 1])  # Example: [1, 12, 56, 1]
     if maxes.shape != expected_shape:
+        fallback_counter[layer_id] += 1
+
+        # Update fallback count for the current layer in the file
+        with open(FALLBACK_LOG_FILE, 'r+') as file:
+            lines = file.readlines()
+            lines[layer_id + 1] = f"Layer {layer_id}: {fallback_counter[layer_id]} fallbacks\n"
+            file.seek(0)
+            file.writelines(lines)
         maxes = torch.max(x, dim, keepdim=True)[0]
-    # Use fallback mean to create a replacement tensor with the correct shape
+        # Use fallback mean to create a replacement tensor with the correct shape
         # fallback_value = 60.97  # You can switch to fallback_min or fallback_max as needed
         # maxes = torch.full(expected_shape, fallback_value, dtype=x.dtype, device=x.device)
 
