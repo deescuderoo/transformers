@@ -347,7 +347,7 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
 
     # Check if maxes shape matches the required shape
     expected_shape = torch.Size([1, x.shape[1], x.shape[2], 1])  # Example: [1, 12, 56, 1]
-    if maxes.shape != expected_shape:
+    if maxes.shape != expected_shape and x.shape[2]>100:
         fallback_counter[layer_id] += 1
 
         # Update fallback count for the current layer in the file
