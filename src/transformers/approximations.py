@@ -352,8 +352,7 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     # x_exp = torch.exp(x-maxes)
 
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
-    if torch.any(x_exp_sum == 0):  # Avoid division by zero
-        x_exp_sum += 1e-8
+    x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
 
     # return x_exp/x_exp_sum
 
