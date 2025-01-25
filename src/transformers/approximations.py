@@ -251,6 +251,16 @@ import torch
 OUTPUT_FOLDER = "output_cycles_2"
 LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
 SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
+MAX_VALUES_FILE = "max_of_maxes_tensors.txt"
+
+# Initialize the file with zeros if it doesn't exist
+if not os.path.exists(MAX_VALUES_FILE):
+    with open(MAX_VALUES_FILE, 'w') as file:
+        for layer_id in range(12):  # Assuming 12 layers
+            tensor = np.zeros((12, 56))  # Default size [12, 56]
+            file.write(f"Layer {layer_id}:\n")
+            file.write(f"Size: {tensor.shape}\n")
+            file.write(f"{tensor.tolist()}\n\n")
 
 # Global file path for fallback logs
 FALLBACK_LOG_FILE = "fallback_counts_log.txt"
@@ -276,34 +286,31 @@ if not os.path.exists(LAYER_MAX_VALUES_FILE):
 
 def approx_softmax_store_in_file(x, layer_id, dim=None):
     # Get max values along the specified dimension
-    maxes = torch.max(x, dim, keepdim=True)[0]
-    maxes_list = maxes.flatten().tolist()
+    maxes = torch.max(x, dim, keepdim=True)[0]  # Shape: [1, 12, W, 1]
+    maxes_reshaped = maxes.squeeze(0).squeeze(-1).cpu().numpy()  # Shape: [12, W]
 
-    if len(maxes_list) == 12:  # Ensure the max array has 12 values
-        # Read current max values from the file
-        with open(LAYER_MAX_VALUES_FILE, 'r') as file:
-            lines = file.readlines()
+    # Read and update the max values file
+    with open(MAX_VALUES_FILE, 'r+') as file:
+        lines = file.readlines()
 
-        current_max_array = lines[layer_id].strip().split(":")[1].strip()
-        # Remove potential surrounding spaces and brackets, then split by comma
-        current_max_array = current_max_array.lstrip('[').rstrip(']')
-        current_max_array = list(map(lambda x: float(x.strip()), current_max_array.split(',')))
+        # Locate the relevant layer
+        start_idx = lines.index(f"Layer {layer_id}:\n") + 1
+        size_idx = start_idx
+        tensor_idx = start_idx + 1
 
-        # Update max values for each position
-        updated_max_array = [
-            max(current, new) for current, new in zip(current_max_array, maxes_list)
-        ]
+        # Load the current max tensor from the file
+        current_size = eval(lines[size_idx].split(":")[1].strip())  # Parse size
+        current_max_tensor = np.array(eval(lines[tensor_idx].strip()))  # Parse tensor
 
-        # Write the updated max values back to the file
-        lines[layer_id] = f"Layer {layer_id}: {updated_max_array}\n"
-        with open(LAYER_MAX_VALUES_FILE, 'w') as file:
-            file.writelines(lines)
+        # Update the max tensor element-wise
+        updated_max_tensor = np.maximum(current_max_tensor, maxes_reshaped)
 
-    else:  # Handle shape mismatches
-        with open(SHAPE_MISMATCH_FILE, 'a') as file:
-            file.write(f"Layer {layer_id}:\n")
-            file.write(f"Input shape: {x.shape}, Maxes summary: mean={np.mean(maxes_list):.2f}, min={np.min(maxes_list):.2f}, max={np.max(maxes_list):.2f}\n\n")
-
+        # Update the file content
+        updated_size = updated_max_tensor.shape  # Size might change dynamically
+        lines[size_idx] = f"Size: {updated_size}\n"
+        lines[tensor_idx] = f"{updated_max_tensor.tolist()}\n"
+        file.seek(0)
+        file.writelines(lines)
 
     # Perform the rest of the softmax approximation as usual
     EXP_ITERATIONS = 7
