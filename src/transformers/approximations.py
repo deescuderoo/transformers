@@ -397,12 +397,12 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     # assert(correct_maxes == maxes)
     global fallback_counter
     maxes = tensors2[layer_id]
-
+    resize = False
     # Apply padding if x.shape[2] is smaller than maxes.shape[2]
     if x.shape[2] < maxes.shape[2]:
         pad_size = maxes.shape[2] - x.shape[2]
         x = torch.nn.functional.pad(x, (0, 0, pad_size, 0))  # Pad along the last dimension
-
+        resize = True
     x = x.double()
     maxes = maxes.double()
     EXP_ITERATIONS = 7
@@ -437,7 +437,7 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
 
-    if x.shape[2] < maxes.shape[2]:
+    if resize:
         out = out[:, :, :x.shape[2], :]
     # out = out * mask  # Final masking for valid values
     # Useful for handpicking initial approx.
