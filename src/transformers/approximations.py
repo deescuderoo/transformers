@@ -253,15 +253,6 @@ LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
 SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
 MAX_VALUES_FILE = "max_of_maxes_tensors.txt"
 
-# Initialize the file with zeros if it doesn't exist
-if not os.path.exists(MAX_VALUES_FILE):
-    with open(MAX_VALUES_FILE, 'w') as file:
-        for layer_id in range(12):  # Assuming 12 layers
-            tensor = np.zeros((12, 56))  # Default size [12, 56]
-            file.write(f"Layer {layer_id}:\n")
-            file.write(f"Size: {tensor.shape}\n")
-            file.write(f"{tensor.tolist()}\n\n")
-
 # Global file path for fallback logs
 FALLBACK_LOG_FILE = "fallback_counts_log.txt"
 
@@ -289,26 +280,43 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     maxes = torch.max(x, dim, keepdim=True)[0]  # Shape: [1, 12, W, 1]
     maxes_reshaped = maxes.squeeze(0).squeeze(-1).cpu().numpy()  # Shape: [12, W]
 
-    # Read and update the max values file
+    # Check if the file exists and if the layer's data is already present
+    if not os.path.exists(MAX_VALUES_FILE):
+        with open(MAX_VALUES_FILE, 'w') as file:
+            file.write("")  # Create an empty file if it doesn't exist
+
     with open(MAX_VALUES_FILE, 'r+') as file:
         lines = file.readlines()
 
-        # Locate the relevant layer
-        start_idx = lines.index(f"Layer {layer_id}:\n") + 1
-        size_idx = start_idx
-        tensor_idx = start_idx + 1
+        # Check if the layer already has data
+        layer_header = f"Layer {layer_id}:\n"
+        if layer_header in lines:
+            # Layer exists; update its data
+            start_idx = lines.index(layer_header) + 1
+            size_idx = start_idx
+            tensor_idx = start_idx + 1
 
-        # Load the current max tensor from the file
-        current_size = eval(lines[size_idx].split(":")[1].strip())  # Parse size
-        current_max_tensor = np.array(eval(lines[tensor_idx].strip()))  # Parse tensor
+            # Load the current max tensor from the file
+            current_size = eval(lines[size_idx].split(":")[1].strip())  # Parse size
+            current_max_tensor = np.array(eval(lines[tensor_idx].strip()))  # Parse tensor
 
-        # Update the max tensor element-wise
-        updated_max_tensor = np.maximum(current_max_tensor, maxes_reshaped)
+            # Update the max tensor element-wise
+            updated_max_tensor = np.maximum(current_max_tensor, maxes_reshaped)
 
-        # Update the file content
-        updated_size = updated_max_tensor.shape  # Size might change dynamically
-        lines[size_idx] = f"Size: {updated_size}\n"
-        lines[tensor_idx] = f"{updated_max_tensor.tolist()}\n"
+            # Update the file content
+            updated_size = updated_max_tensor.shape  # Size might change dynamically
+            lines[size_idx] = f"Size: {updated_size}\n"
+            lines[tensor_idx] = f"{updated_max_tensor.tolist()}\n"
+        else:
+            # Layer doesn't exist; write new data
+            updated_size = maxes_reshaped.shape  # Get the current size
+            lines.extend([
+                f"{layer_header}",
+                f"Size: {updated_size}\n",
+                f"{maxes_reshaped.tolist()}\n\n"
+            ])
+
+        # Write the updated content back to the file
         file.seek(0)
         file.writelines(lines)
 
