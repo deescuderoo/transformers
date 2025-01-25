@@ -397,6 +397,9 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     # assert(correct_maxes == maxes)
     global fallback_counter
     maxes = tensors2[layer_id]
+    # Adjust `maxes` to match `x` shape
+    maxes = maxes[:, :, :x.shape[2], :]  # Slice maxes to match x.shape[2]
+    maxes = maxes.expand(1, x.shape[1], x.shape[2], 1)  # Ensure shape is (1, x.shape[1], x.shape[2], 1)
 
     # # Apply padding only if needed
     # if x.shape[2] < 223:
