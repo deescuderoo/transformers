@@ -397,7 +397,8 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     # assert(correct_maxes == maxes)
     constant_value = 60.967552185058594 # Adjust based on typical range of x
     maxes = torch.full((1, x.shape[1], x.shape[2], 1), constant_value) # Same shape as x, filled with constant_value
-
+    if torch.cuda.is_available():
+        maxes = maxes.to('cuda')
     EXP_ITERATIONS = 7
     x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
