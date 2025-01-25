@@ -217,19 +217,19 @@ mod_model.eval()
 if torch.cuda.is_available(): mod_model.to('cuda')
 
 
-# prompt_text = "The secret for success is"
-#
-# ### Tokenize the prompt text
-# input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
-# if torch.cuda.is_available(): input_ids = input_ids.to('cuda')
-#
-#
-# ### Generate and decode text
-#
-# std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"std output:\n{std_generated_text}")
+prompt_text = "The secret for success is"
+
+### Tokenize the prompt text
+input_ids = tokenizer.encode(prompt_text, return_tensors="pt")
+if torch.cuda.is_available(): input_ids = input_ids.to('cuda')
+
+
+### Generate and decode text
+
+std_output = std_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"std output:\n{std_generated_text}")
 
 #gelu_output = gelu_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 #gelu_generated_text = tokenizer.decode(gelu_output[0], skip_special_tokens=True)
@@ -251,10 +251,10 @@ if torch.cuda.is_available(): mod_model.to('cuda')
 #print("------------------------------------------\n")
 #print(f"gelu_stdln_aprxsm output:\n{gelu_stdln_aprxsm_generated_text}")
 
-# mod_output = mod_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-# mod_generated_text = tokenizer.decode(mod_output[0], skip_special_tokens=True)
-# print("------------------------------------------\n")
-# print(f"mod output:\n{mod_generated_text}")
+mod_output = mod_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+mod_generated_text = tokenizer.decode(mod_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"mod output:\n{mod_generated_text}")
 
 
 ####################################################################

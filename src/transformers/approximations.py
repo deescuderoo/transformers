@@ -397,39 +397,14 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     # assert(correct_maxes == maxes)
     global fallback_counter
     maxes = tensors2[layer_id]
-    # Adjust `maxes` to match `x` shape
-    # maxes = torch.nn.functional.adaptive_avg_pool2d(maxes, (x.shape[2], 1))
-    # mask = (x != 0).float()
-    # # Apply padding only if needed
-    # if x.shape[2] < 223:
-    #     pad_size = 223 - x.shape[2]
-    #     x = torch.nn.functional.pad(x, (0, pad_size, 0, 0, 0, 0))  # Pad last dimension
-    #
-    # # Create a mask for padded values (assuming padding with 0)
-    # mask = (x != 0).float()
 
-    # # Check if maxes shape matches the required shape
-    # expected_shape = torch.Size([1, x.shape[1], x.shape[2], 1])  # Example: [1, 12, 56, 1]
-    # if maxes.shape != expected_shape and x.shape[2]>50:
-    #     fallback_counter[layer_id] += 1
-    #
-    #     # Update fallback count for the current layer in the file
-    #     with open(FALLBACK_LOG_FILE, 'r+') as file:
-    #         lines = file.readlines()
-    #         lines[layer_id + 1] = f"Layer {layer_id}: {fallback_counter[layer_id]} fallbacks\n"
-    #         file.seek(0)
-    #         file.writelines(lines)
-    #     maxes = torch.max(x, dim, keepdim=True)[0]
-    #     # Use fallback mean to create a replacement tensor with the correct shape
-    #     # fallback_value = 60.97  # You can switch to fallback_min or fallback_max as needed
-    #     # maxes = torch.full(expected_shape, fallback_value, dtype=x.dtype, device=x.device)
+    # Apply padding if x.shape[2] is smaller than maxes.shape[2]
+    if x.shape[2] < maxes.shape[2]:
+        pad_size = maxes.shape[2] - x.shape[2]
+        x = torch.nn.functional.pad(x, (0, 0, pad_size, 0))  # Pad along the last dimension
 
     x = x.double()
     maxes = maxes.double()
-
-    # if maxes.shape[2] != x.shape[2]:
-    #     maxes = maxes.expand(-1, -1, x.shape[2], -1)
-
     EXP_ITERATIONS = 7
     x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
