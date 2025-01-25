@@ -398,7 +398,8 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     global fallback_counter
     maxes = tensors2[layer_id]
     # Adjust `maxes` to match `x` shape
-    maxes = maxes[:, :, :x.shape[2], :]  # Slice maxes to match x.shape[2]
+    maxes = torch.nn.functional.adaptive_avg_pool2d(maxes, (x.shape[2], 1))
+    mask = (x != 0).float()
     # # Apply padding only if needed
     # if x.shape[2] < 223:
     #     pad_size = 223 - x.shape[2]
@@ -437,11 +438,13 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     x_exp[x <= -3.4028e+37] = 0
     # assert torch.all(x_exp <= 1)
     # x_exp = torch.exp(x-maxes)
+    x_exp = x_exp * mask
 
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
 
     # return x_exp/x_exp_sum
+    x_exp_sum = x_exp_sum * mask
 
     # Division
     # out = x_exp/x_exp_sum
@@ -458,7 +461,7 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
 
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
-
+    out = out * mask  # Final masking for valid values
     # Useful for handpicking initial approx.
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
