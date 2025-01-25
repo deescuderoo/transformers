@@ -436,6 +436,9 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
 
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
+
+    if x.shape[2] < maxes.shape[2]:
+        out = out[:, :, :x.shape[2], :]
     # out = out * mask  # Final masking for valid values
     # Useful for handpicking initial approx.
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
