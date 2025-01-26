@@ -282,6 +282,8 @@ max_constants.append(np.max(layer9_matrix))
 max_constants.append(np.max(layer10_matrix))
 max_constants.append(np.max(layer11_matrix))
 
+print(max_constants)
+
 def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
     # print("input shape", x.shape)
