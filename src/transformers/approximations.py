@@ -423,7 +423,7 @@ nan_logged = False
 def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
-    maxes = torch.full((1, x.shape[1], x.shape[2], 1), mean_constants[layer_id]) # Same shape as x, filled with constant_value
+    maxes = torch.full((1, x.shape[1], x.shape[2], 1), max_constants[layer_id]) # Same shape as x, filled with constant_value
     if torch.cuda.is_available():
         maxes = maxes.to('cuda')
     EXP_ITERATIONS = 7
