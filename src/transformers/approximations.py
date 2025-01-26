@@ -548,7 +548,7 @@ def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIO
     # assert(correct_maxes == maxes)
     # maxes = tensors5[layer_id]
     # maxes = maxes[:, :, :x.shape[2], :]  #wsc best accuracy
-    maxes = torch.full((1, x.shape[1], x.shape[2], 1), mean_constants[layer_id])
+    maxes = torch.full((1, x.shape[1], x.shape[2], 1), max_constants[layer_id])
 
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
