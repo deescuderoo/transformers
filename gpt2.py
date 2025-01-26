@@ -277,8 +277,9 @@ tasks = [
     # "lambada_openai",
     # "hellaswag",
     # "arc_easy",
-    "wikitext",
-    # "glue"
+    #"wikitext",
+    # "glue",
+    "storycloze",
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
