@@ -277,12 +277,13 @@ tasks = [
     # "lambada_openai",
     # "hellaswag",
     # "arc_easy",
-    #"wikitext", -- not accurate
+    # "wikitext", -- not accurate
     # "glue",
     # "storycloze", -- needs custom dataset download
-    "wsc",
+    # "wsc",
     # "lambada_cloze",
-    # "lambada_standard_cloze_yaml" --nan
+    # "lambada_standard_cloze_yaml" --nan,
+    "piqa"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
