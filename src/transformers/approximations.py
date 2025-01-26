@@ -254,6 +254,34 @@ tensors2[9] = torch.tensor(layer9_matrix, device=device).reshape(1, 12, 223, 1)
 tensors2[10] = torch.tensor(layer10_matrix, device=device).reshape(1, 12, 223, 1)
 tensors2[11] = torch.tensor(layer11_matrix, device=device).reshape(1, 12, 223, 1)
 
+mean_constants=[]
+mean_constants[0] = np.mean(layer0_matrix)
+mean_constants[1] = np.mean(layer1_matrix)
+mean_constants[2] = np.mean(layer2_matrix)
+mean_constants[3] = np.mean(layer3_matrix)
+mean_constants[4] = np.mean(layer4_matrix)
+mean_constants[5] = np.mean(layer5_matrix)
+mean_constants[6] = np.mean(layer6_matrix)
+mean_constants[7] = np.mean(layer7_matrix)
+mean_constants[8] = np.mean(layer8_matrix)
+mean_constants[9] = np.mean(layer9_matrix)
+mean_constants[10] = np.mean(layer10_matrix)
+mean_constants[11] = np.mean(layer11_matrix)
+
+max_constants=[]
+max_constants[0] = np.max(layer0_matrix)
+max_constants[1] = np.max(layer1_matrix)
+max_constants[2] = np.max(layer2_matrix)
+max_constants[3] = np.max(layer3_matrix)
+max_constants[4] = np.max(layer4_matrix)
+max_constants[5] = np.max(layer5_matrix)
+max_constants[6] = np.max(layer6_matrix)
+max_constants[7] = np.max(layer7_matrix)
+max_constants[8] = np.max(layer8_matrix)
+max_constants[9] = np.max(layer9_matrix)
+max_constants[10] = np.max(layer10_matrix)
+max_constants[11] = np.max(layer11_matrix)
+
 def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
     # print("input shape", x.shape)
@@ -395,8 +423,7 @@ nan_logged = False
 def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
-    constant_value = 60.967552185058594 # Adjust based on typical range of x
-    maxes = torch.full((1, x.shape[1], x.shape[2], 1), constant_value) # Same shape as x, filled with constant_value
+    maxes = torch.full((1, x.shape[1], x.shape[2], 1), mean_constants[layer_id]) # Same shape as x, filled with constant_value
     if torch.cuda.is_available():
         maxes = maxes.to('cuda')
     EXP_ITERATIONS = 7
