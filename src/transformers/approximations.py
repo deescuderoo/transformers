@@ -420,7 +420,46 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
 
-nan_logged = False
+def approx_softmax_without_max_replacement(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
+    # correct_maxes = torch.max(x, dim, keepdim=True)[0]
+    # assert(correct_maxes == maxes)
+    maxes = torch.max(x, dim, keepdim=True)[0]
+
+    EXP_ITERATIONS = 7
+    x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
+    x_exp = approx_exp(x_diff, EXP_ITERATIONS)
+    # x_exp = torch.exp(x-maxes)
+
+    x_exp[x <= -3.4028e+37] = 0
+    # assert torch.all(x_exp <= 1)
+    # x_exp = torch.exp(x-maxes)
+    # x_exp = x_exp * mask
+
+    x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
+    x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
+
+    # return x_exp/x_exp_sum
+    # x_exp_sum = x_exp_sum * mask
+
+    # Division
+    # out = x_exp/x_exp_sum
+    normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
+
+    # assert torch.all(x_exp_sum / normalizer <= 1)
+
+    # norm: divide by length so that quotient is <1 (denominator
+    # becomes the mean)
+    G_ITERATIONS = 7
+    if torch.cuda.is_available():
+        normalizer = normalizer.to('cuda')
+        # print(f"Device: {normalizer.device}")
+
+    out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
+                     G_ITERATIONS)
+    # out = out * mask  # Final masking for valid values
+    # Useful for handpicking initial approx.
+    # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
+    return out
 
 def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
