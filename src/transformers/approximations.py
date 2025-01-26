@@ -336,6 +336,7 @@ OUTPUT_FOLDER = "output_cycles_2"
 LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
 SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
 MAX_VALUES_FILE = "max_of_maxes_tensors.txt"
+MAX_VALUES_FILE_CLOZE = "max_of_maxes_tensors_cloze.txt"
 
 # Global file path for fallback logs
 FALLBACK_LOG_FILE = "fallback_counts_log.txt"
@@ -365,11 +366,11 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     maxes_reshaped = maxes.squeeze(0).squeeze(-1).cpu().numpy()  # Shape: [12, W]
 
     # Check if the file exists and if the layer's data is already present
-    if not os.path.exists(MAX_VALUES_FILE):
-        with open(MAX_VALUES_FILE, 'w') as file:
+    if not os.path.exists(MAX_VALUES_FILE_CLOZE):
+        with open(MAX_VALUES_FILE_CLOZE, 'w') as file:
             file.write("")  # Create an empty file if it doesn't exist
 
-    with open(MAX_VALUES_FILE, 'r+') as file:
+    with open(MAX_VALUES_FILE_CLOZE, 'r+') as file:
         lines = file.readlines()
 
         # Check if the layer already has data
