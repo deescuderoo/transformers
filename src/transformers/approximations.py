@@ -282,32 +282,32 @@ tensors3[10] = torch.tensor(layer10_lambada_cloze, device=device).reshape(1, 12,
 tensors3[11] = torch.tensor(layer11_lambada_cloze, device=device).reshape(1, 12, 227, 1)
 
 mean_constants=[]
-mean_constants.append(np.mean(layer0_matrix))
-mean_constants.append(np.mean(layer1_matrix))
-mean_constants.append(np.mean(layer2_matrix))
-mean_constants.append(np.mean(layer3_matrix))
-mean_constants.append(np.mean(layer4_matrix))
-mean_constants.append(np.mean(layer5_matrix))
-mean_constants.append(np.mean(layer6_matrix))
-mean_constants.append(np.mean(layer7_matrix))
-mean_constants.append(np.mean(layer8_matrix))
-mean_constants.append(np.mean(layer9_matrix))
-mean_constants.append(np.mean(layer10_matrix))
-mean_constants.append(np.mean(layer11_matrix))
+mean_constants.append(np.mean(layer0_lambada_cloze))
+mean_constants.append(np.mean(layer1_lambada_cloze))
+mean_constants.append(np.mean(layer2_lambada_cloze))
+mean_constants.append(np.mean(layer3_lambada_cloze))
+mean_constants.append(np.mean(layer4_lambada_cloze))
+mean_constants.append(np.mean(layer5_lambada_cloze))
+mean_constants.append(np.mean(layer6_lambada_cloze))
+mean_constants.append(np.mean(layer7_lambada_cloze))
+mean_constants.append(np.mean(layer8_lambada_cloze))
+mean_constants.append(np.mean(layer9_lambada_cloze))
+mean_constants.append(np.mean(layer10_lambada_cloze))
+mean_constants.append(np.mean(layer11_lambada_cloze))
 
 max_constants=[]
-max_constants.append(np.max(layer0_matrix))
-max_constants.append(np.max(layer1_matrix))
-max_constants.append(np.max(layer2_matrix))
-max_constants.append(np.max(layer3_matrix))
-max_constants.append(np.max(layer4_matrix))
-max_constants.append(np.max(layer5_matrix))
-max_constants.append(np.max(layer6_matrix))
-max_constants.append(np.max(layer7_matrix))
-max_constants.append(np.max(layer8_matrix))
-max_constants.append(np.max(layer9_matrix))
-max_constants.append(np.max(layer10_matrix))
-max_constants.append(np.max(layer11_matrix))
+max_constants.append(np.max(layer0_lambada_cloze))
+max_constants.append(np.max(layer1_lambada_cloze))
+max_constants.append(np.max(layer2_lambada_cloze))
+max_constants.append(np.max(layer3_lambada_cloze))
+max_constants.append(np.max(layer4_lambada_cloze))
+max_constants.append(np.max(layer5_lambada_cloze))
+max_constants.append(np.max(layer6_lambada_cloze))
+max_constants.append(np.max(layer7_lambada_cloze))
+max_constants.append(np.max(layer8_lambada_cloze))
+max_constants.append(np.max(layer9_lambada_cloze))
+max_constants.append(np.max(layer10_lambada_cloze))
+max_constants.append(np.max(layer11_lambada_cloze))
 
 print(max_constants)
 
@@ -492,7 +492,7 @@ def approx_softmax_without_max_replacement(x, layer_id, dim=None): #FINAL FUNCTI
 def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
-    maxes = tensors3[layer_id] # Same shape as x, filled with constant_value
+    maxes = torch.full((1, x.shape[1], x.shape[2], 1), max_constants[layer_id]) # Same shape as x, filled with constant_value
     if torch.cuda.is_available():
         maxes = maxes.to('cuda')
     EXP_ITERATIONS = 7
