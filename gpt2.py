@@ -279,7 +279,8 @@ tasks = [
     # "arc_easy",
     #"wikitext",
     # "glue",
-    "storycloze",
+    # "storycloze",
+    "wsc"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
