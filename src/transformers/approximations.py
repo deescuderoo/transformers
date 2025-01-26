@@ -336,32 +336,32 @@ tensors5[10] = torch.tensor(layer10_piqa, device=device).reshape(1, 12, 254, 1)
 tensors5[11] = torch.tensor(layer11_piqa, device=device).reshape(1, 12, 254, 1)
 
 mean_constants=[]
-mean_constants.append(np.mean(layer0_wsc))
-mean_constants.append(np.mean(layer1_wsc))
-mean_constants.append(np.mean(layer2_wsc))
-mean_constants.append(np.mean(layer3_wsc))
-mean_constants.append(np.mean(layer4_wsc))
-mean_constants.append(np.mean(layer5_wsc))
-mean_constants.append(np.mean(layer6_wsc))
-mean_constants.append(np.mean(layer7_wsc))
-mean_constants.append(np.mean(layer8_wsc))
-mean_constants.append(np.mean(layer9_wsc))
-mean_constants.append(np.mean(layer10_wsc))
-mean_constants.append(np.mean(layer11_wsc))
+mean_constants.append(np.mean(layer0_piqa))
+mean_constants.append(np.mean(layer1_piqa))
+mean_constants.append(np.mean(layer2_piqa))
+mean_constants.append(np.mean(layer3_piqa))
+mean_constants.append(np.mean(layer4_piqa))
+mean_constants.append(np.mean(layer5_piqa))
+mean_constants.append(np.mean(layer6_piqa))
+mean_constants.append(np.mean(layer7_piqa))
+mean_constants.append(np.mean(layer8_piqa))
+mean_constants.append(np.mean(layer9_piqa))
+mean_constants.append(np.mean(layer10_piqa))
+mean_constants.append(np.mean(layer11_piqa))
 
 max_constants=[]
-max_constants.append(np.max(layer0_wsc))
-max_constants.append(np.max(layer1_wsc))
-max_constants.append(np.max(layer2_wsc))
-max_constants.append(np.max(layer3_wsc))
-max_constants.append(np.max(layer4_wsc))
-max_constants.append(np.max(layer5_wsc))
-max_constants.append(np.max(layer6_wsc))
-max_constants.append(np.max(layer7_wsc))
-max_constants.append(np.max(layer8_wsc))
-max_constants.append(np.max(layer9_wsc))
-max_constants.append(np.max(layer10_wsc))
-max_constants.append(np.max(layer11_wsc))
+max_constants.append(np.max(layer0_piqa))
+max_constants.append(np.max(layer1_piqa))
+max_constants.append(np.max(layer2_piqa))
+max_constants.append(np.max(layer3_piqa))
+max_constants.append(np.max(layer4_piqa))
+max_constants.append(np.max(layer5_piqa))
+max_constants.append(np.max(layer6_piqa))
+max_constants.append(np.max(layer7_piqa))
+max_constants.append(np.max(layer8_piqa))
+max_constants.append(np.max(layer9_piqa))
+max_constants.append(np.max(layer10_piqa))
+max_constants.append(np.max(layer11_piqa))
 
 print(max_constants)
 
@@ -546,10 +546,12 @@ def approx_softmax_without_max_replacement(x, layer_id, dim=None): #FINAL FUNCTI
 def approx_softmax(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
-    maxes = tensors5[layer_id]
-    maxes = maxes[:, :, :x.shape[2], :]  #wsc best accuracy
+    # maxes = tensors5[layer_id]
+    # maxes = maxes[:, :, :x.shape[2], :]  #wsc best accuracy
+    maxes = torch.full((1, x.shape[1], x.shape[2], 1), mean_constants[layer_id])
+
     if torch.cuda.is_available():
-         maxes = maxes.to('cuda')
+             maxes = maxes.to('cuda')
 
     EXP_ITERATIONS = 7
     x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
