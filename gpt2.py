@@ -281,7 +281,8 @@ tasks = [
     # "glue",
     # "storycloze", -- needs custom dataset download
     # "wsc", -- good accuracy
-    "lambada_cloze"
+    # "lambada_cloze",
+    "lambada_standard_cloze_yaml"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
