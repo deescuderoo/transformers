@@ -275,8 +275,8 @@ from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
     # "lambada_openai",
-    "hellaswag",
-    # "arc_easy",
+    # "hellaswag",
+    "arc_easy",
     # "wikitext", -- not accurate
     # "glue",
     # "storycloze", -- needs custom dataset download
