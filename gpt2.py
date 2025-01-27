@@ -275,7 +275,7 @@ from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
     # "lambada_openai",
-    # "hellaswag",
+    "hellaswag",
     # "arc_easy",
     # "wikitext", -- not accurate
     # "glue",
@@ -283,7 +283,7 @@ tasks = [
     # "wsc",
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
-    "piqa"
+    # "piqa"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
