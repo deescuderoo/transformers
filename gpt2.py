@@ -284,7 +284,7 @@ tasks = [
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
     # "piqa",
-    "cbt"
+    "race"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
