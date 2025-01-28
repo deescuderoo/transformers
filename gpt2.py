@@ -125,14 +125,14 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 20
+    NEWTON_ITERATIONS = 16
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
     for _ in range(NEWTON_ITERATIONS):
         y = (y * (3 - x * y**2)) / 2
-    # return y
-    return 1/torch.sqrt(x)
+    return y
+    # return 1/torch.sqrt(x)
 
 
 def ref_inv_sqrt(x):
@@ -162,8 +162,8 @@ class NewLayerNorm(nn.Module):
         var = (diff**2).sum(-1, keepdim=True) / length
         sqrt_input = (var + self.eps) / SCALE_ROOT**2
 
-        # newton = newton_inv_sqrt(sqrt_input)
-        newton = ref_inv_sqrt(sqrt_input)
+        newton = newton_inv_sqrt(sqrt_input)
+        # newton = ref_inv_sqrt(sqrt_input)
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
@@ -177,9 +177,6 @@ class NewLayerNorm(nn.Module):
 
 refln_model = GPT2LMHeadModel.from_pretrained(gpt2)
 gelu_aprxln_model = GPT2LMHeadModel.from_pretrained(gpt2, config=new_config)
-
-# refln_model_xl = GPT2LMHeadModel.from_pretrained(gpt2)
-# gelu_aprxln_model_xl = GPT2LMHeadModel.from_pretrained(gpt2, config=new_config)
 
 #for block in refln_model.transformer.h:
 #    block.ln_1 = RefLayerNorm(block.ln_1)
@@ -296,7 +293,7 @@ task_manager = lm_eval.tasks.TaskManager()
 
 
 # Modified model
-mod_model_lmeval = gelu_stdln_aprxsm_model
+mod_model_lmeval = mod_model
 if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
 mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 
