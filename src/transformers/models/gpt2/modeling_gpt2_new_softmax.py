@@ -48,7 +48,7 @@ from ...utils import (
 from ...utils.model_parallel_utils import assert_device_map, get_device_map
 from .configuration_gpt2 import GPT2Config
 
-from ...approximations import approx_softmax, interm_softmax, approx_softmax_store_in_file, approx_softmax_without_max_replacement
+from ...approximations import approx_softmax, approx_softmax_store_in_file, approx_softmax_without_max_replacement
 
 
 logger = logging.get_logger(__name__)
