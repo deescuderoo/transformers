@@ -562,7 +562,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
         raise ValueError(f"Layer {layer_id} data not found in the JSON file for model {model}.")
 
     # Ensure maxes are in tensor format for PyTorch
-    maxes = torch.tensor(maxes)
+    maxes = torch.tensor(maxes).unsqueeze(0).unsqueeze(-1)
     maxes = maxes[:, :, :x.shape[2], :]
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
