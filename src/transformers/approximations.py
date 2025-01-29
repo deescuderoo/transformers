@@ -266,7 +266,7 @@ def ref_softmax(x, dim=None):
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     return x_exp/x_exp_sum
 
-MAX_VALUES_FILE = "layer_max_tensors_gpt2_medium_race.txt"
+MAX_VALUES_FILE = "layer_max_tensors_gpt2_medium_arc.txt"
 
 # Global file path for fallback logs
 FALLBACK_LOG_FILE = "fallback_counts_log.txt"
