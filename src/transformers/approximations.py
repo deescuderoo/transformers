@@ -426,8 +426,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
 
     # Access the tensor dictionary dynamically
     tensor_dict = globals().get(tensor_name)
-    maxes = tensor_dict[layer_id].unsqueeze(0)
-    print(maxes.shape)
+    maxes = tensor_dict[layer_id]
     maxes = maxes[:, :, :x.shape[2], :]
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
