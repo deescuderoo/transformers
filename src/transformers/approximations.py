@@ -387,9 +387,8 @@ import torch
 
 # Global variables
 OUTPUT_FOLDER = "output_cycles_2"
-LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
 SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
-MAX_VALUES_FILE = "max_of_maxes_tensors.txt"
+MAX_VALUES_FILE = "layer_max_tensors_gpt2_medium_race.txt"
 MAX_VALUES_FILE_CLOZE = "max_of_maxes_tensors_cloze.txt"
 
 # Global file path for fallback logs
@@ -406,12 +405,6 @@ fallback_counter = [0] * 12  # Assuming 12 layers per input
 
 # Ensure the folder exists
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-
-# Initialize the max values file if not already present
-if not os.path.exists(LAYER_MAX_VALUES_FILE):
-    with open(LAYER_MAX_VALUES_FILE, 'w') as file:
-        for layer_id in range(12):  # Assuming 12 layers
-            file.write(f"Layer {layer_id}: {[float('-inf')] * 12}\n")  # Initialize with -inf
 
 
 def approx_softmax_store_in_file(x, layer_id, dim=None):
@@ -501,7 +494,7 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     # Useful for handpicking initial approx.
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
-layers =[]
+
 def approx_softmax_without_max_replacement(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
