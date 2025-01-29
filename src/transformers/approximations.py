@@ -544,7 +544,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     global testsuite
     #filename = f"/home/ubuntu/transformers/src/transformers/max_tensors/{model}.json"
 
-    file_path = os.path.abspath("../max_tensors/gpt2-medium.json")
+    file_path = os.path.abspath(f"/home/ubuntu/transformers/src/max_tensors/{model}.json")
     print(f"Resolved file path: {file_path}")
     # Read the JSON file containing the layer data
     try:
