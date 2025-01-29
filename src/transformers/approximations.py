@@ -286,11 +286,11 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 def convert_model_name(model_name):
     return model_name.replace("-", "_")
 
-def approx_softmax_store_in_file(x, layer_id, dim=None):
+def approx_softmax_store_in_file(x, layer_id, model, dim=None):
     # Get max values along the specified dimension
     maxes = torch.max(x, dim, keepdim=True)[0]  # Shape: [1, 12, W, 1]
     maxes_reshaped = maxes.squeeze(0).squeeze(-1).cpu().numpy()  # Shape: [12, W]
-
+    MAX_VALUES_FILE = f"layer_max_tensors_{model}_arc.txt"
     # Check if the file exists and if the layer's data is already present
     if not os.path.exists(MAX_VALUES_FILE):
         with open(MAX_VALUES_FILE, 'w') as file:
@@ -374,7 +374,7 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
 
-def approx_softmax_without_max_replacement(x, layer_id, dim=None): #FINAL FUNCTION WITHOUT MAX REPLACEMENT
+def approx_softmax_without_max_replacement(x, layer_id, model, dim=None): #FINAL FUNCTION WITHOUT MAX REPLACEMENT
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
     maxes = torch.max(x, dim, keepdim=True)[0]
