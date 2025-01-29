@@ -152,6 +152,7 @@ class GPT2Attention(nn.Module):
         # Layer-wise attention scaling, reordering, and upcasting
         self.scale_attn_by_inverse_layer_idx = config.scale_attn_by_inverse_layer_idx
         self.layer_idx = layer_idx
+        self.config= config
         self.reorder_and_upcast_attn = config.reorder_and_upcast_attn
 
         if self.is_cross_attention:
@@ -210,7 +211,7 @@ class GPT2Attention(nn.Module):
         # attn_weights = nn.functional.softmax(attn_weights, dim=-1)
         # DANIEL: MODIFICATIONS HERE
         # attn_weights = interm_softmax(attn_weights, self.layer_idx, dim=-1)
-        attn_weights = approx_softmax_store_in_file(attn_weights, self.layer_idx, dim=-1)
+        attn_weights = approx_softmax(attn_weights, self.layer_idx, self.config._name_or_path, dim=-1)
         # print(f"MAX:\n {torch.max(attn_weights)}")
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
         attn_weights = attn_weights.type(value.dtype)
