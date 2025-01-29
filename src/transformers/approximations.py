@@ -564,7 +564,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
 
     # Ensure maxes are in tensor format for PyTorch
     maxes = torch.tensor(maxes)
-
+    maxes = maxes[:, :, :x.shape[2], :]
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
 
