@@ -5,6 +5,7 @@ import numpy as np
 import json
 from max_tensors.gpt2_medium_maxes import tensors_gpt2_medium_piqa, tensors_gpt2_medium_race
 from max_tensors.gpt2_maxes import tensors_gpt2_piqa, tensors_gpt2_wsc
+from max_tensors.gpt2_large_maxes import tensors_gpt2_large_piqa
 
 def compare_f(x, n):
     res = 0
