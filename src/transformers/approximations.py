@@ -291,7 +291,7 @@ def approx_softmax_store_in_file(x, layer_id, model, dim=None):
     # Get max values along the specified dimension
     maxes = torch.max(x, dim, keepdim=True)[0]  # Shape: [1, 12, W, 1]
     maxes_reshaped = maxes.squeeze(0).squeeze(-1).cpu().numpy()  # Shape: [12, W]
-    MAX_VALUES_FILE = f"layer_max_tensors_{model}_race.txt"
+    MAX_VALUES_FILE = f"layer_max_tensors_{model}_piqa.txt"
     # Check if the file exists and if the layer's data is already present
     if not os.path.exists(MAX_VALUES_FILE):
         with open(MAX_VALUES_FILE, 'w') as file:
