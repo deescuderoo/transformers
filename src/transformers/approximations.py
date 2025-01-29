@@ -542,11 +542,13 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     # maxes = tensors5[layer_id]
     # maxes = maxes[:, :, :x.shape[2], :]  #wsc best accuracy
     global testsuite
-    filename = f"../max_tensors/{model}.json"
+    #filename = f"/home/ubuntu/transformers/src/transformers/max_tensors/{model}.json"
 
+    file_path = os.path.abspath("../max_tensors/gpt2-medium.json")
+    print(f"Resolved file path: {file_path}")
     # Read the JSON file containing the layer data
     try:
-        with open(filename, "r") as f:
+        with open(file_path, "r") as f:
             data = json.load(f)
     except FileNotFoundError:
         raise ValueError(f"JSON file for model {model} not found.")
