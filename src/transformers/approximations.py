@@ -542,7 +542,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     # maxes = tensors5[layer_id]
     # maxes = maxes[:, :, :x.shape[2], :]  #wsc best accuracy
     global testsuite
-    filename = f"max_tensors/{model}.json"
+    filename = f"./max_tensors/{model}.json"
 
     # Read the JSON file containing the layer data
     try:
