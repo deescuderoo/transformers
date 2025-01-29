@@ -501,12 +501,14 @@ def approx_softmax_store_in_file(x, layer_id, dim=None):
     # Useful for handpicking initial approx.
     # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
-
+layers =[]
 def approx_softmax_without_max_replacement(x, layer_id, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
     maxes = torch.max(x, dim, keepdim=True)[0]
-
+    global layers
+    if layer_id not in layers:
+        print(layer_id)
     EXP_ITERATIONS = 7
     x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
