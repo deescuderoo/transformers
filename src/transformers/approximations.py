@@ -424,13 +424,13 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     # maxes = maxes[:, :, :x.shape[2], :]  #wsc best accuracy
     global testsuite
     model_name = convert_model_name(model)
-    tensor_name = f"max_constants_{model_name}_{testsuite}"
+    tensor_name = f"tensors_{model_name}_{testsuite}"
 
     # Access the tensor dictionary dynamically
     tensor_dict = globals().get(tensor_name)
-    maxes = torch.full((1,x.shape[1],x.shape[2],1),tensor_dict[layer_id])
-    #maxes = tensor_dict[layer_id]
-    #maxes = maxes[:, :, :x.shape[2], :]
+    #maxes = torch.full((1,x.shape[1],x.shape[2],1),tensor_dict[layer_id])
+    maxes = tensor_dict[layer_id]
+    maxes = maxes[:, :, :x.shape[2], :]
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
 
