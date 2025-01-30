@@ -285,8 +285,8 @@ tasks = [
     # "wsc",
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
-    "piqa"
-    # "race",
+    # "piqa",
+    "race"
     # "triviaqa"
         ]
 batch_size = 8
