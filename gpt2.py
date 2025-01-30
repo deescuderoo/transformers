@@ -31,7 +31,7 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
-gpt2 = "gpt2-large" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+gpt2 = "gpt2" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
 
 # This is the default GPT2 model from HF
 std_model = GPT2LMHeadModel.from_pretrained(gpt2)
@@ -125,7 +125,7 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 16
+    NEWTON_ITERATIONS = 16 #check
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -153,7 +153,7 @@ class NewLayerNorm(nn.Module):
         # print("running approx layernorm")
         # Scales the variance down by SCALE_ROOT^2. Important to fit
         # in the required range
-        SCALE_ROOT = 30
+        SCALE_ROOT = 30 #check
 
         length = x.shape[-1]
         mean = x.mean(-1, keepdim=True)
