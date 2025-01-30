@@ -125,7 +125,7 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 25 #check
+    NEWTON_ITERATIONS = 24 #check
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
