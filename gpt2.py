@@ -125,7 +125,7 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 16 #check
+    NEWTON_ITERATIONS = 20 #check
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -278,14 +278,14 @@ from lm_eval.models.huggingface import HFLM
 tasks = [
     # "lambada_openai",
     # "hellaswag"
-    "arc_easy"
+    # "arc_easy"
     # "wikitext", -- not accurate
     # "glue",
     # "storycloze", -- needs custom dataset download
     # "wsc",
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
-    # "piqa",
+    "piqa"
     # "race"
     # "triviaqa"
         ]
