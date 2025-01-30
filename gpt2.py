@@ -189,10 +189,10 @@ gelu_aprxln_model = GPT2LMHeadModel.from_pretrained(gpt2, config=new_config)
 
 gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 
-mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
-for block in mod_model.transformer.h:
-    block.ln_1 = NewLayerNorm(block.ln_1)
-    block.ln_2 = NewLayerNorm(block.ln_2)
+mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2)
+# for block in mod_model.transformer.h:
+#     block.ln_1 = NewLayerNorm(block.ln_1)
+#     block.ln_2 = NewLayerNorm(block.ln_2)
 
 
 
@@ -277,8 +277,8 @@ from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
     # "lambada_openai",
-    "hellaswag"
-    # "arc_easy"
+    # "hellaswag"
+    "arc_easy"
     # "wikitext", -- not accurate
     # "glue",
     # "storycloze", -- needs custom dataset download
