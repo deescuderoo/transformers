@@ -438,7 +438,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     # maxes = maxes[:, :, :x.shape[2], :]  #wsc best accuracy
     global testsuite
     model_name = convert_model_name(model)
-    tensor_name = f"max_constants_{model_name}_{testsuite}"
+    tensor_name = f"tensors_{model_name}_{testsuite}"
 
     # Access the tensor dictionary dynamically
     tensor_dict = globals().get(tensor_name)
