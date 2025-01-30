@@ -311,7 +311,7 @@ def approx_softmax_store_in_file(x, layer_id, model, dim=None):
 
             # Load the current max tensor from the file
             current_size = eval(lines[size_idx].split(":")[1].strip())  # Parse size
-            current_max_tensor = np.array(eval(lines[tensor_idx].strip()))  # Parse tensor
+            current_max_tensor = np.array(eval(lines[tensor_idx].strip().replace("nan", "float('nan')")))  # Parse tensor
 
             # Handle size mismatch by resizing tensors
             updated_size = (max(current_size[0], maxes_reshaped.shape[0]),  # Rows
