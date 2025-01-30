@@ -290,10 +290,16 @@ def convert_model_name(model_name):
 
 def approx_softmax_store_in_file(x, layer_id, model, dim=None):
     # Get max values along the specified dimension
+    if torch.isnan(x).any():
+        print(f"Warning: NaN detected in input tensor at layer {layer_id} for model {model}")
+
+    # Get max values
     maxes = torch.max(x, dim, keepdim=True)[0]  # Shape: [1, 12, W, 1]
     maxes_reshaped = maxes.squeeze(0).squeeze(-1).cpu().numpy()  # Shape: [12, W]
+
     MAX_VALUES_FILE = f"layer_max_tensors_{model}_race.txt"
-    # Check if the file exists and if the layer's data is already present
+
+    # Check if the file exists
     if not os.path.exists(MAX_VALUES_FILE):
         with open(MAX_VALUES_FILE, 'w') as file:
             file.write("")  # Create an empty file if it doesn't exist
@@ -304,25 +310,33 @@ def approx_softmax_store_in_file(x, layer_id, model, dim=None):
         # Check if the layer already has data
         layer_header = f"Layer {layer_id}:\n"
         if layer_header in lines:
-            # Layer exists; update its data
             start_idx = lines.index(layer_header) + 1
             size_idx = start_idx
             tensor_idx = start_idx + 1
 
-            # Load the current max tensor from the file
-            current_size = eval(lines[size_idx].split(":")[1].strip())  # Parse size
-            current_max_tensor = np.array(eval(lines[tensor_idx].strip().replace("nan", "float('nan')")))  # Parse tensor
+            # Load size safely
+            try:
+                current_size = eval(lines[size_idx].split(":")[1].strip())
+            except Exception as e:
+                print(f"Error parsing size for layer {layer_id}: {e}")
+                return
 
-            # Handle size mismatch by resizing tensors
-            updated_size = (max(current_size[0], maxes_reshaped.shape[0]),  # Rows
-                            max(current_size[1], maxes_reshaped.shape[1]))  # Columns
+            # Load tensor safely
+            try:
+                current_max_tensor = np.array(eval(lines[tensor_idx].strip().replace("nan", "float('nan')")))
+            except Exception as e:
+                print(f"Error parsing tensor for layer {layer_id}: {e}")
+                return
 
-            # Resize the current max tensor to match the updated size
-            resized_current_max_tensor = np.full(updated_size, float('-inf'))  # Initialize with -inf
+            # Handle size mismatch
+            updated_size = (max(current_size[0], maxes_reshaped.shape[0]),
+                            max(current_size[1], maxes_reshaped.shape[1]))
+
+            # Initialize tensors safely
+            resized_current_max_tensor = np.full(updated_size, -1e9)  # Large negative instead of -inf
             resized_current_max_tensor[:current_size[0], :current_size[1]] = current_max_tensor
 
-            # Resize the new tensor to match the updated size
-            resized_maxes_reshaped = np.full(updated_size, float('-inf'))  # Initialize with -inf
+            resized_maxes_reshaped = np.full(updated_size, -1e9)
             resized_maxes_reshaped[:maxes_reshaped.shape[0], :maxes_reshaped.shape[1]] = maxes_reshaped
 
             # Update the max tensor element-wise
@@ -340,7 +354,7 @@ def approx_softmax_store_in_file(x, layer_id, model, dim=None):
                 f"{maxes_reshaped.tolist()}\n\n"
             ])
 
-        # Write the updated content back to the file
+        # Write back
         file.seek(0)
         file.writelines(lines)
 
@@ -364,7 +378,7 @@ def approx_softmax_store_in_file(x, layer_id, model, dim=None):
 
     # norm: divide by length so that quotient is <1 (denominator
     # becomes the mean)
-    G_ITERATIONS = 14
+    G_ITERATIONS = 7
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
         # print(f"Device: {normalizer.device}")
