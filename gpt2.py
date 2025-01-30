@@ -31,7 +31,7 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
-gpt2 = "gpt2" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+gpt2 = "gpt2-medium" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
 
 # This is the default GPT2 model from HF
 std_model = GPT2LMHeadModel.from_pretrained(gpt2)
@@ -125,7 +125,7 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 16 #check
+    NEWTON_ITERATIONS = 18 #check
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -285,8 +285,8 @@ tasks = [
     # "wsc",
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
-    # "piqa"
-    "race"
+    "piqa"
+    # "race"
     # "triviaqa"
         ]
 batch_size = 8
