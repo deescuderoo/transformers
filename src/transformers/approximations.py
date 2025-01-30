@@ -258,7 +258,7 @@ layer11_array=[5.02396297454834, 4.904455661773682, 5.005637168884277, 3.7745230
 # max_constants.append(np.max(layer9_piqa))
 # max_constants.append(np.max(layer10_piqa))
 # max_constants.append(np.max(layer11_piqa))
-testsuite = "piqa"
+testsuite = "arc"
 
 def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
