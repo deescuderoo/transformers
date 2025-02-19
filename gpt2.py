@@ -160,9 +160,10 @@ class NewLayerNorm(nn.Module):
         diff = x - mean
         var = (diff**2).sum(-1, keepdim=True) / length
         sqrt_input = (var + self.eps) / SCALE_ROOT**2
-
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         #newton = newton_inv_sqrt(sqrt_input)
-        newton = torch.full([1,x.shape[1],1],14)
+        newton = torch.full([1,x.shape[1],1],14, device= device)
+
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
         return y
