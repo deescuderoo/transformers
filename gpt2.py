@@ -216,8 +216,8 @@ gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_co
 
 mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 for block in mod_model.transformer.h:
-    block.ln_1 = NewLayerNormReplace(block.ln_1)
-    block.ln_2 = NewLayerNormReplace(block.ln_2)
+    block.ln_1 = NewLayerNorm(block.ln_1)
+    block.ln_2 = NewLayerNorm(block.ln_2)
 
 
 
