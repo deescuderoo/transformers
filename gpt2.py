@@ -1,7 +1,7 @@
 from transformers import GPT2Config, GPT2Model, GPT2Tokenizer, GPT2LMHeadModel
 from transformers import pipeline, set_seed
 from transformers import activations
-import torch
+import torch, os
 from torch import nn
 import numpy as np
 from transformers import GPT2LMHeadModelNew
@@ -31,7 +31,7 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
-gpt2 = "gpt2-medium" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+gpt2 = "gpt2" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
 
 # This is the default GPT2 model from HF
 std_model = GPT2LMHeadModel.from_pretrained(gpt2)
@@ -141,8 +141,33 @@ def ref_inv_sqrt(x):
     '''
     return 1/torch.sqrt(x)
 
-
 class NewLayerNorm(nn.Module):
+    def __init__(self, old_ln):
+        super().__init__()
+        self.weights = old_ln.weight
+        self.bias = old_ln.bias
+        self.eps = old_ln.eps
+
+    def forward(self, x):
+        # print("running approx layernorm")
+        # Scales the variance down by SCALE_ROOT^2. Important to fit
+        # in the required range
+        SCALE_ROOT = 30 #check
+        print(x.shape)
+        length = x.shape[-1]
+        mean = x.mean(-1, keepdim=True)
+
+        diff = x - mean
+        var = (diff**2).sum(-1, keepdim=True) / length
+        sqrt_input = (var + self.eps) / SCALE_ROOT**2
+
+        #newton = newton_inv_sqrt(sqrt_input)
+        newton = torch.full([1,x.shape[1],1],14)
+        y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
+
+        return y
+
+class NewLayerNormReplace(nn.Module):
     def __init__(self, old_ln):
         super().__init__()
         self.weights = old_ln.weight
@@ -191,8 +216,8 @@ gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_co
 
 mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 for block in mod_model.transformer.h:
-    block.ln_1 = NewLayerNorm(block.ln_1)
-    block.ln_2 = NewLayerNorm(block.ln_2)
+    block.ln_1 = NewLayerNormReplace(block.ln_1)
+    block.ln_2 = NewLayerNormReplace(block.ln_2)
 
 
 
