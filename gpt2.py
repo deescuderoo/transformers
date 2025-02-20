@@ -162,7 +162,7 @@ class NewLayerNorm(nn.Module):
         sqrt_input = (var + self.eps) / SCALE_ROOT**2
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         #newton = newton_inv_sqrt(sqrt_input)
-        newton = torch.full([1,x.shape[1],1],14, device= device)
+        newton = torch.full([1,x.shape[1],1],198.66920471191406, device= device)
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
@@ -237,8 +237,8 @@ gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_co
 
 mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 for block in mod_model.transformer.h:
-    block.ln_1 = NewLayerNormReplace(block.ln_1)
-    block.ln_2 = NewLayerNormReplace(block.ln_2)
+    block.ln_1 = NewLayerNorm(block.ln_1)
+    block.ln_2 = NewLayerNorm(block.ln_2)
 
 
 
