@@ -234,8 +234,8 @@ gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_co
 
 mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 for block in mod_model.transformer.h:
-    block.ln_1 = NewLayerNorm(block.ln_1)
-    block.ln_2 = NewLayerNorm(block.ln_2)
+    block.ln_1 = NewLayerNormReplace(block.ln_1)
+    block.ln_2 = NewLayerNormReplace(block.ln_2)
 
 
 
@@ -314,59 +314,59 @@ print(f"mod output:\n{mod_generated_text}")
 
 # LM EVAL using the evaluation harness
 
-# import lm_eval
+import lm_eval
+
+from lm_eval.models.huggingface import HFLM
+# Uncomment the desired tasks
+tasks = [
+    # "lambada_openai",
+    # "hellaswag"
+    "arc_easy"
+    # "wikitext", -- not accurate
+    # "glue",
+    # "storycloze", -- needs custom dataset download
+    # "wsc",
+    # "lambada_cloze",
+    # "lambada_standard_cloze_yaml" --nan,
+    # "piqa"
+    # "race"
+    # "triviaqa"
+        ]
+batch_size = 8
+task_manager = lm_eval.tasks.TaskManager()
+
+
+# Modified model
+mod_model_lmeval = mod_model
+if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
+mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
+
+mod_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=mod_model_lmeval,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    batch_size=batch_size)
+
+
+# Standard model
+std_model_lmeval = std_model
+if torch.cuda.is_available(): std_model_lmeval.to('cuda')
+std_model_lmeval = HFLM(pretrained=std_model_lmeval)
+
+std_results = lm_eval.simple_evaluate( # call simple_evaluate
+    model=std_model_lmeval,
+    tasks=tasks,
+    num_fewshot=0,
+    task_manager=task_manager,
+    batch_size=batch_size)
+
+
+print("Modified:")
+print(mod_results['results'])
 #
-# from lm_eval.models.huggingface import HFLM
-# # Uncomment the desired tasks
-# tasks = [
-#     # "lambada_openai",
-#     # "hellaswag"
-#     "arc_easy"
-#     # "wikitext", -- not accurate
-#     # "glue",
-#     # "storycloze", -- needs custom dataset download
-#     # "wsc",
-#     # "lambada_cloze",
-#     # "lambada_standard_cloze_yaml" --nan,
-#     # "piqa"
-#     # "race"
-#     # "triviaqa"
-#         ]
-# batch_size = 8
-# task_manager = lm_eval.tasks.TaskManager()
-#
-#
-# # Modified model
-# mod_model_lmeval = mod_model
-# if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
-# mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
-#
-# mod_results = lm_eval.simple_evaluate( # call simple_evaluate
-#     model=mod_model_lmeval,
-#     tasks=tasks,
-#     num_fewshot=0,
-#     task_manager=task_manager,
-#     batch_size=batch_size)
-#
-#
-# # Standard model
-# std_model_lmeval = std_model
-# if torch.cuda.is_available(): std_model_lmeval.to('cuda')
-# std_model_lmeval = HFLM(pretrained=std_model_lmeval)
-#
-# std_results = lm_eval.simple_evaluate( # call simple_evaluate
-#     model=std_model_lmeval,
-#     tasks=tasks,
-#     num_fewshot=0,
-#     task_manager=task_manager,
-#     batch_size=batch_size)
-#
-#
-# print("Modified:")
-# print(mod_results['results'])
-# #
-# print("Standard:")
-# print(std_results['results'])
+print("Standard:")
+print(std_results['results'])
 
 
 # # Below: code for saving and loading the results 
