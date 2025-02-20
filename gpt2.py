@@ -168,22 +168,25 @@ class NewLayerNorm(nn.Module):
 
         return y
 
+global_max = 0
+global_min = 0
+global_sum = 0.0
+global_count = 0
+
+stats_file="newton_stats.txt"
+
 class NewLayerNormReplace(nn.Module):
-    def __init__(self, old_ln, stats_file="newton_stats.txt"):
+    def __init__(self, old_ln):
         super().__init__()
         self.weights = old_ln.weight
         self.bias = old_ln.bias
         self.eps = old_ln.eps
-        self.stats_file = stats_file
-        self.global_max = float('-inf')
-        self.global_min = float('inf')
-        self.global_sum = 0.0
-        self.global_count = 0
 
     def forward(self, x):
         # print("running approx layernorm")
         # Scales the variance down by SCALE_ROOT^2. Important to fit
         # in the required range
+        global global_max, global_min, global_sum, global_count, stats_file
         SCALE_ROOT = 30 #check
 
         length = x.shape[-1]
@@ -199,14 +202,14 @@ class NewLayerNormReplace(nn.Module):
         min_val = newton.min().item()
         mean_val = newton.mean().item()
 
-        self.global_max = max(self.global_max, max_val)
-        self.global_min = min(self.global_min, min_val)
-        self.global_sum += mean_val
-        self.global_count += 1
+        global_max = max(global_max, max_val)
+        global_min = min(global_min, min_val)
+        global_sum += mean_val
+        global_count += 1
 
-        with open(self.stats_file, "w") as f:
-            avg_mean = self.global_sum / self.global_count if self.global_count > 0 else 0.0
-            f.write(f"Global Max: {self.global_max}, Global Min: {self.global_min}, Global Mean: {avg_mean}\n")
+        with open(stats_file, "w") as f:
+            avg_mean = global_sum / global_count if global_count > 0 else 0.0
+            f.write(f"Global Max: {global_max}, Global Min: {global_min}, Global Mean: {avg_mean}\n")
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
