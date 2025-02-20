@@ -153,7 +153,6 @@ class NewLayerNorm(nn.Module):
         # Scales the variance down by SCALE_ROOT^2. Important to fit
         # in the required range
         SCALE_ROOT = 30 #check
-        print(x.shape)
         length = x.shape[-1]
         mean = x.mean(-1, keepdim=True)
 
