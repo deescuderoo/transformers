@@ -169,11 +169,16 @@ class NewLayerNorm(nn.Module):
         return y
 
 class NewLayerNormReplace(nn.Module):
-    def __init__(self, old_ln):
+    def __init__(self, old_ln, stats_file="newton_stats.txt"):
         super().__init__()
         self.weights = old_ln.weight
         self.bias = old_ln.bias
         self.eps = old_ln.eps
+        self.stats_file = stats_file
+        self.global_max = float('-inf')
+        self.global_min = float('inf')
+        self.global_sum = 0.0
+        self.global_count = 0
 
     def forward(self, x):
         # print("running approx layernorm")
@@ -190,6 +195,18 @@ class NewLayerNormReplace(nn.Module):
 
         newton = newton_inv_sqrt(sqrt_input)
         # newton = ref_inv_sqrt(sqrt_input)
+        max_val = newton.max().item()
+        min_val = newton.min().item()
+        mean_val = newton.mean().item()
+
+        self.global_max = max(self.global_max, max_val)
+        self.global_min = min(self.global_min, min_val)
+        self.global_sum += mean_val
+        self.global_count += 1
+
+        with open(self.stats_file, "w") as f:
+            avg_mean = self.global_sum / self.global_count if self.global_count > 0 else 0.0
+            f.write(f"Global Max: {self.global_max}, Global Min: {self.global_min}, Global Mean: {avg_mean}\n")
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
@@ -297,59 +314,59 @@ print(f"mod output:\n{mod_generated_text}")
 
 # LM EVAL using the evaluation harness
 
-import lm_eval
-
-from lm_eval.models.huggingface import HFLM
-# Uncomment the desired tasks
-tasks = [
-    # "lambada_openai",
-    # "hellaswag"
-    "arc_easy"
-    # "wikitext", -- not accurate
-    # "glue",
-    # "storycloze", -- needs custom dataset download
-    # "wsc",
-    # "lambada_cloze",
-    # "lambada_standard_cloze_yaml" --nan,
-    # "piqa"
-    # "race"
-    # "triviaqa"
-        ]
-batch_size = 8
-task_manager = lm_eval.tasks.TaskManager()
-
-
-# Modified model
-mod_model_lmeval = mod_model
-if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
-mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
-
-mod_results = lm_eval.simple_evaluate( # call simple_evaluate
-    model=mod_model_lmeval,
-    tasks=tasks,
-    num_fewshot=0,
-    task_manager=task_manager,
-    batch_size=batch_size)
-
-
-# Standard model
-std_model_lmeval = std_model
-if torch.cuda.is_available(): std_model_lmeval.to('cuda')
-std_model_lmeval = HFLM(pretrained=std_model_lmeval)
-
-std_results = lm_eval.simple_evaluate( # call simple_evaluate
-    model=std_model_lmeval,
-    tasks=tasks,
-    num_fewshot=0,
-    task_manager=task_manager,
-    batch_size=batch_size)
-
-
-print("Modified:")
-print(mod_results['results'])
+# import lm_eval
 #
-print("Standard:")
-print(std_results['results'])
+# from lm_eval.models.huggingface import HFLM
+# # Uncomment the desired tasks
+# tasks = [
+#     # "lambada_openai",
+#     # "hellaswag"
+#     "arc_easy"
+#     # "wikitext", -- not accurate
+#     # "glue",
+#     # "storycloze", -- needs custom dataset download
+#     # "wsc",
+#     # "lambada_cloze",
+#     # "lambada_standard_cloze_yaml" --nan,
+#     # "piqa"
+#     # "race"
+#     # "triviaqa"
+#         ]
+# batch_size = 8
+# task_manager = lm_eval.tasks.TaskManager()
+#
+#
+# # Modified model
+# mod_model_lmeval = mod_model
+# if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
+# mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
+#
+# mod_results = lm_eval.simple_evaluate( # call simple_evaluate
+#     model=mod_model_lmeval,
+#     tasks=tasks,
+#     num_fewshot=0,
+#     task_manager=task_manager,
+#     batch_size=batch_size)
+#
+#
+# # Standard model
+# std_model_lmeval = std_model
+# if torch.cuda.is_available(): std_model_lmeval.to('cuda')
+# std_model_lmeval = HFLM(pretrained=std_model_lmeval)
+#
+# std_results = lm_eval.simple_evaluate( # call simple_evaluate
+#     model=std_model_lmeval,
+#     tasks=tasks,
+#     num_fewshot=0,
+#     task_manager=task_manager,
+#     batch_size=batch_size)
+#
+#
+# print("Modified:")
+# print(mod_results['results'])
+# #
+# print("Standard:")
+# print(std_results['results'])
 
 
 # # Below: code for saving and loading the results 
