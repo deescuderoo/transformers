@@ -5,6 +5,7 @@ import torch, os
 from torch import nn
 import numpy as np
 from transformers import GPT2LMHeadModelNew
+from layer_norm_tensors.layer_norm_arc_easy import tensors_gpt2_norm
 
 # Several models are defined in this file:
 
@@ -141,6 +142,8 @@ def ref_inv_sqrt(x):
     '''
     return 1/torch.sqrt(x)
 
+layernorm_replace_counter = 0
+
 class NewLayerNorm(nn.Module):
     def __init__(self, old_ln):
         super().__init__()
@@ -157,13 +160,22 @@ class NewLayerNorm(nn.Module):
         mean = x.mean(-1, keepdim=True)
 
         diff = x - mean
-        var = (diff**2).sum(-1, keepdim=True) / length
-        sqrt_input = (var + self.eps) / SCALE_ROOT**2
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        #var = (diff**2).sum(-1, keepdim=True) / length
+        #sqrt_input = (var + self.eps) / SCALE_ROOT**2
         #newton = newton_inv_sqrt(sqrt_input)
-        newton = torch.full([1,x.shape[1],1],198.66920471191406, device= device)
+        global layernorm_replace_counter  # Use global counter
+        if tensors_gpt2_norm[layernorm_replace_counter] is not None:
+            norm_tensor = tensors_gpt2_norm[layernorm_replace_counter]
+        else:
+            raise ValueError(f"LayerNorm tensor at index {layernorm_replace_counter} is missing!")
+        norm_tensor = norm_tensor[:, :x.shape[1], :]
 
-        y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
+        if torch.cuda.is_available():
+            norm_tensor = norm_tensor.to('cuda')
+        layernorm_replace_counter = (layernorm_replace_counter + 1) % 24
+        #newton = torch.full([1,x.shape[1],1],198.66920471191406, device= device)
+
+        y = diff * (norm_tensor) * self.weights / SCALE_ROOT + self.bias
 
         return y
 
@@ -301,8 +313,8 @@ gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_co
 
 mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 for block in mod_model.transformer.h:
-    block.ln_1 = NewLayerNormReplace(block.ln_1)
-    block.ln_2 = NewLayerNormReplace(block.ln_2)
+    block.ln_1 = NewLayerNorm(block.ln_1)
+    block.ln_2 = NewLayerNorm(block.ln_2)
 
 
 
