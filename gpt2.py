@@ -193,7 +193,7 @@ def update_layernorm_max(layernorm_tensor):
         layernorm_tensor = np.expand_dims(layernorm_tensor, axis=1)  # Convert (N,) to (N,1)
 
     if np.isnan(layernorm_tensor).any():
-        print(f"Warning: NaNs detected in Layer {layer_id} - LayerNorm {norm_index}, replacing with -1e9")
+        #print(f"Warning: NaNs detected in Layer {layer_id} - LayerNorm {norm_index}, replacing with -1e9")
         layernorm_tensor = np.nan_to_num(layernorm_tensor, nan=-1e9)
 
     # Ensure file exists
@@ -212,14 +212,14 @@ def update_layernorm_max(layernorm_tensor):
             try:
                 current_size = eval(lines[size_idx].split(":")[1].strip())
             except Exception as e:
-                print(f"Error parsing size for {layer_header.strip()}: {e}")
+                #print(f"Error parsing size for {layer_header.strip()}: {e}")
                 layernorm_counter = (layernorm_counter + 1) % 24
                 return
 
             try:
                 current_max_tensor = np.array(eval(lines[tensor_idx].strip().replace("nan", "float('nan')")))
             except Exception as e:
-                print(f"Error parsing tensor for {layer_header.strip()}: {e}")
+                #print(f"Error parsing tensor for {layer_header.strip()}: {e}")
                 layernorm_counter = (layernorm_counter + 1) % 24
                 return
 
