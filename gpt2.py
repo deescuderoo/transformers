@@ -163,19 +163,19 @@ class NewLayerNorm(nn.Module):
         #var = (diff**2).sum(-1, keepdim=True) / length
         #sqrt_input = (var + self.eps) / SCALE_ROOT**2
         #newton = newton_inv_sqrt(sqrt_input)
-        global layernorm_replace_counter  # Use global counter
-        if tensors_gpt2_norm[layernorm_replace_counter] is not None:
-            norm_tensor = tensors_gpt2_norm[layernorm_replace_counter]
-        else:
-            raise ValueError(f"LayerNorm tensor at index {layernorm_replace_counter} is missing!")
-        norm_tensor = norm_tensor[:, :x.shape[1], :]
+        # global layernorm_replace_counter  # Use global counter
+        # if tensors_gpt2_norm[layernorm_replace_counter] is not None:
+        #     norm_tensor = tensors_gpt2_norm[layernorm_replace_counter]
+        # else:
+        #     raise ValueError(f"LayerNorm tensor at index {layernorm_replace_counter} is missing!")
+        # norm_tensor = norm_tensor[:, :x.shape[1], :]
+        #
+        # if torch.cuda.is_available():
+        #     norm_tensor = norm_tensor.to('cuda')
+        # layernorm_replace_counter = (layernorm_replace_counter + 1) % 24
+        newton = torch.full([1,x.shape[1],1],198.66920471191406, device= "cuda")
 
-        if torch.cuda.is_available():
-            norm_tensor = norm_tensor.to('cuda')
-        layernorm_replace_counter = (layernorm_replace_counter + 1) % 24
-        #newton = torch.full([1,x.shape[1],1],198.66920471191406, device= device)
-
-        y = diff * (norm_tensor) * self.weights / SCALE_ROOT + self.bias
+        y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
         return y
 
