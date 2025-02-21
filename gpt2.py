@@ -182,8 +182,13 @@ def update_layernorm_max(layernorm_tensor):
     norm_index = (layernorm_counter % 2) + 1  # 1 or 2
     layer_key = f"layer_{layer_id}_{norm_index}"
 
+    # Move tensor to CPU and convert to NumPy
     if isinstance(layernorm_tensor, torch.Tensor):
         layernorm_tensor = layernorm_tensor.detach().cpu().numpy()
+
+    # Ensure layernorm_tensor is at least 1D
+    if layernorm_tensor.ndim == 0:
+        layernorm_tensor = np.expand_dims(layernorm_tensor, axis=0)
 
     # Read the existing file
     with open(LAYERNORM_VALUES_FILE, 'r+') as file:
@@ -196,21 +201,24 @@ def update_layernorm_max(layernorm_tensor):
                 existing_entry = idx
                 break
 
-        # Convert tensor to a NumPy array for element-wise max
-        layernorm_tensor = np.array(layernorm_tensor)
-
         if existing_entry is not None:
             try:
                 # Load existing max tensor safely
                 current_max_tensor = np.array(eval(lines[existing_entry].split(":")[1].strip().replace("nan", "float('nan')")))
 
-                # Ensure shape consistency
-                updated_size = (max(current_max_tensor.shape[0], layernorm_tensor.shape[0]),)
-                resized_current_max = np.full(updated_size, -1e9)
-                resized_current_max[:current_max_tensor.shape[0]] = current_max_tensor
+                # Ensure shape consistency (handle 2D cases)
+                max_shape = (
+                    max(current_max_tensor.shape[0], layernorm_tensor.shape[0]),
+                    max(current_max_tensor.shape[1] if current_max_tensor.ndim > 1 else 1,
+                        layernorm_tensor.shape[1] if layernorm_tensor.ndim > 1 else 1)
+                )
 
-                resized_new_tensor = np.full(updated_size, -1e9)
-                resized_new_tensor[:layernorm_tensor.shape[0]] = layernorm_tensor
+                resized_current_max = np.full(max_shape, -1e9)
+                resized_new_tensor = np.full(max_shape, -1e9)
+
+                # Copy existing values safely
+                resized_current_max[:current_max_tensor.shape[0], :current_max_tensor.shape[1] if current_max_tensor.ndim > 1 else 1] = current_max_tensor
+                resized_new_tensor[:layernorm_tensor.shape[0], :layernorm_tensor.shape[1] if layernorm_tensor.ndim > 1 else 1] = layernorm_tensor
 
                 # Update the max tensor element-wise
                 updated_max_tensor = np.maximum(resized_current_max, resized_new_tensor)
