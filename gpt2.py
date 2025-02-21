@@ -186,8 +186,8 @@ def update_layernorm_max(layernorm_tensor):
     if isinstance(layernorm_tensor, torch.Tensor):
         layernorm_tensor = layernorm_tensor.detach().cpu().numpy()
 
-    # Ensure layernorm_tensor is at least 1D
-    if layernorm_tensor.ndim == 0:
+    # Ensure at least 2D shape for consistency
+    if layernorm_tensor.ndim == 1:
         layernorm_tensor = np.expand_dims(layernorm_tensor, axis=0)
 
     # Read the existing file
@@ -206,21 +206,21 @@ def update_layernorm_max(layernorm_tensor):
                 # Load existing max tensor safely
                 current_max_tensor = np.array(eval(lines[existing_entry].split(":")[1].strip().replace("nan", "float('nan')")))
 
-                # Ensure shape consistency (handle 2D cases)
+                # Ensure both tensors have exactly the same shape
                 max_shape = (
                     max(current_max_tensor.shape[0], layernorm_tensor.shape[0]),
-                    max(current_max_tensor.shape[1] if current_max_tensor.ndim > 1 else 1,
-                        layernorm_tensor.shape[1] if layernorm_tensor.ndim > 1 else 1)
+                    max(current_max_tensor.shape[1], layernorm_tensor.shape[1])
                 )
 
+                # Resize existing max tensor
                 resized_current_max = np.full(max_shape, -1e9)
+                resized_current_max[:current_max_tensor.shape[0], :current_max_tensor.shape[1]] = current_max_tensor
+
+                # Resize new tensor
                 resized_new_tensor = np.full(max_shape, -1e9)
+                resized_new_tensor[:layernorm_tensor.shape[0], :layernorm_tensor.shape[1]] = layernorm_tensor
 
-                # Copy existing values safely
-                resized_current_max[:current_max_tensor.shape[0], :current_max_tensor.shape[1] if current_max_tensor.ndim > 1 else 1] = current_max_tensor
-                resized_new_tensor[:layernorm_tensor.shape[0], :layernorm_tensor.shape[1] if layernorm_tensor.ndim > 1 else 1] = layernorm_tensor
-
-                # Update the max tensor element-wise
+                # Compute updated max tensor
                 updated_max_tensor = np.maximum(resized_current_max, resized_new_tensor)
 
                 # Update the file content
