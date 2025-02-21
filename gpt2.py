@@ -178,65 +178,65 @@ if not os.path.exists(LAYERNORM_VALUES_FILE):
 def update_layernorm_max(layernorm_tensor):
     global layernorm_counter
 
-    layer_id = (layernorm_counter // 2) + 1  # Determine the layer index
+    layer_id = (layernorm_counter // 2) + 1  # Layer number (1-based)
     norm_index = (layernorm_counter % 2) + 1  # 1 or 2
-    layer_key = f"layer_{layer_id}_{norm_index}"
+    layer_header = f"Layer {layer_id} - LayerNorm {norm_index}:\n"
 
-    # Move tensor to CPU and convert to NumPy
     if isinstance(layernorm_tensor, torch.Tensor):
         layernorm_tensor = layernorm_tensor.detach().cpu().numpy()
 
-    # Ensure at least 2D shape for consistency (always rows × columns)
     if layernorm_tensor.ndim == 1:
-        layernorm_tensor = np.expand_dims(layernorm_tensor, axis=1)  # Convert (N,) to (N,1)
+        layernorm_tensor = np.expand_dims(layernorm_tensor, axis=1)
 
-    # Read the existing file
+    if not os.path.exists(LAYERNORM_VALUES_FILE):
+        with open(LAYERNORM_VALUES_FILE, 'w') as file:
+            file.write("")
+
     with open(LAYERNORM_VALUES_FILE, 'r+') as file:
         lines = file.readlines()
 
-        # Check if the layernorm entry exists
-        existing_entry = None
-        for idx, line in enumerate(lines):
-            if line.startswith(layer_key):
-                existing_entry = idx
-                break
+        if layer_header in lines:
+            start_idx = lines.index(layer_header) + 1
+            size_idx = start_idx
+            tensor_idx = start_idx + 1
 
-        if existing_entry is not None:
             try:
-                # Load existing max tensor safely
-                current_max_tensor = np.array(eval(lines[existing_entry].split(":")[1].strip().replace("nan", "float('nan')")))
-
-                # Ensure both tensors are exactly the same shape
-                max_rows = max(current_max_tensor.shape[0], layernorm_tensor.shape[0])
-                max_cols = max(current_max_tensor.shape[1] if current_max_tensor.ndim > 1 else 1,
-                               layernorm_tensor.shape[1] if layernorm_tensor.ndim > 1 else 1)
-
-                # Create properly shaped tensors
-                resized_current_max = np.full((max_rows, max_cols), -1e9)
-                resized_new_tensor = np.full((max_rows, max_cols), -1e9)
-
-                # Copy existing values safely
-                resized_current_max[:current_max_tensor.shape[0], :current_max_tensor.shape[1] if current_max_tensor.ndim > 1 else 1] = current_max_tensor
-                resized_new_tensor[:layernorm_tensor.shape[0], :layernorm_tensor.shape[1] if layernorm_tensor.ndim > 1 else 1] = layernorm_tensor
-
-                # Compute updated max tensor
-                updated_max_tensor = np.maximum(resized_current_max, resized_new_tensor)
-
-                # Update the file content
-                lines[existing_entry] = f"{layer_key}: {updated_max_tensor.tolist()}\n"
+                current_size = eval(lines[size_idx].split(":")[1].strip())
             except Exception as e:
-                print(f"Error parsing tensor for {layer_key}: {e}")
+                print(f"Error parsing size for {layer_header.strip()}: {e}")
                 return
-        else:
-            # LayerNorm entry doesn't exist; write new data
-            lines.append(f"{layer_key}: {layernorm_tensor.tolist()}\n")
 
-        # Write back
+            try:
+                current_max_tensor = np.array(eval(lines[tensor_idx].strip().replace("nan", "float('nan')")))
+            except Exception as e:
+                print(f"Error parsing tensor for {layer_header.strip()}: {e}")
+                return
+
+            updated_size = (max(current_size[0], layernorm_tensor.shape[0]),
+                            max(current_size[1], layernorm_tensor.shape[1]))
+
+            resized_current_max_tensor = np.full(updated_size, -1e9)
+            resized_current_max_tensor[:current_size[0], :current_size[1]] = current_max_tensor
+
+            resized_layernorm_tensor = np.full(updated_size, -1e9)
+            resized_layernorm_tensor[:layernorm_tensor.shape[0], :layernorm_tensor.shape[1]] = layernorm_tensor
+
+            updated_max_tensor = np.maximum(resized_current_max_tensor, resized_layernorm_tensor)
+
+            lines[size_idx] = f"Size: {updated_size}\n"
+            lines[tensor_idx] = f"{updated_max_tensor.tolist()}\n"
+        else:
+            updated_size = layernorm_tensor.shape
+            lines.extend([
+                f"{layer_header}",
+                f"Size: {updated_size}\n",
+                f"{layernorm_tensor.tolist()}\n\n"
+            ])
+
         file.seek(0)
         file.writelines(lines)
-        file.truncate()  # Ensure no extra data remains
+        file.truncate()
 
-    # Increment and reset counter after 24
     layernorm_counter = (layernorm_counter + 1) % 24
 
 class NewLayerNormReplace(nn.Module):
