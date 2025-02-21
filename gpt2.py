@@ -155,8 +155,8 @@ class NewLayerNorm(nn.Module):
         # print("running approx layernorm")
         # Scales the variance down by SCALE_ROOT^2. Important to fit
         # in the required range
-        SCALE_ROOT = 30 #check
-        length = x.shape[-1]
+        SCALE_ROOT = 40 #check
+        #length = x.shape[-1]
         mean = x.mean(-1, keepdim=True)
 
         diff = x - mean
