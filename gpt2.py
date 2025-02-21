@@ -185,9 +185,18 @@ def update_layernorm_max(layernorm_tensor):
     if isinstance(layernorm_tensor, torch.Tensor):
         layernorm_tensor = layernorm_tensor.detach().cpu().numpy()
 
-    if layernorm_tensor.ndim == 1:
-        layernorm_tensor = np.expand_dims(layernorm_tensor, axis=1)
+    # Ensure the tensor is at least 2D (rows, cols)
+    layernorm_tensor = layernorm_tensor.squeeze()  # Removes singleton dimensions
+    if layernorm_tensor.ndim == 0:
+        layernorm_tensor = np.array([[layernorm_tensor]])  # Convert scalar to (1,1)
+    elif layernorm_tensor.ndim == 1:
+        layernorm_tensor = np.expand_dims(layernorm_tensor, axis=1)  # Convert (N,) to (N,1)
 
+    if np.isnan(layernorm_tensor).any():
+        print(f"Warning: NaNs detected in Layer {layer_id} - LayerNorm {norm_index}, replacing with -1e9")
+        layernorm_tensor = np.nan_to_num(layernorm_tensor, nan=-1e9)
+
+    # Ensure file exists
     if not os.path.exists(LAYERNORM_VALUES_FILE):
         with open(LAYERNORM_VALUES_FILE, 'w') as file:
             file.write("")
@@ -204,12 +213,14 @@ def update_layernorm_max(layernorm_tensor):
                 current_size = eval(lines[size_idx].split(":")[1].strip())
             except Exception as e:
                 print(f"Error parsing size for {layer_header.strip()}: {e}")
+                layernorm_counter = (layernorm_counter + 1) % 24
                 return
 
             try:
                 current_max_tensor = np.array(eval(lines[tensor_idx].strip().replace("nan", "float('nan')")))
             except Exception as e:
                 print(f"Error parsing tensor for {layer_header.strip()}: {e}")
+                layernorm_counter = (layernorm_counter + 1) % 24
                 return
 
             updated_size = (max(current_size[0], layernorm_tensor.shape[0]),
