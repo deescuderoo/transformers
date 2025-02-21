@@ -167,12 +167,67 @@ class NewLayerNorm(nn.Module):
 
         return y
 
-global_max = 0
-global_min = 0
-global_sum = 0.0
-global_count = 0
+LAYERNORM_VALUES_FILE = "layernorm_max_tensors.txt"
+layernorm_counter = 0  # Tracks LayerNorm calls (0 to 23)
 
-stats_file="newton_stats.txt"
+# Check if the file exists
+if not os.path.exists(LAYERNORM_VALUES_FILE):
+    with open(LAYERNORM_VALUES_FILE, 'w') as file:
+        file.write("")  # Create an empty file if it doesn't exist
+
+def update_layernorm_max(layernorm_tensor):
+    global layernorm_counter
+
+    layer_id = (layernorm_counter // 2) + 1  # Determine the layer index
+    norm_index = (layernorm_counter % 2) + 1  # 1 or 2
+    layer_key = f"layer_{layer_id}_{norm_index}"
+
+    # Read the existing file
+    with open(LAYERNORM_VALUES_FILE, 'r+') as file:
+        lines = file.readlines()
+
+        # Check if the layernorm entry exists
+        existing_entry = None
+        for idx, line in enumerate(lines):
+            if line.startswith(layer_key):
+                existing_entry = idx
+                break
+
+        # Convert tensor to a NumPy array for element-wise max
+        layernorm_tensor = np.array(layernorm_tensor)
+
+        if existing_entry is not None:
+            try:
+                # Load existing max tensor safely
+                current_max_tensor = np.array(eval(lines[existing_entry].split(":")[1].strip().replace("nan", "float('nan')")))
+
+                # Ensure shape consistency
+                updated_size = (max(current_max_tensor.shape[0], layernorm_tensor.shape[0]),)
+                resized_current_max = np.full(updated_size, -1e9)
+                resized_current_max[:current_max_tensor.shape[0]] = current_max_tensor
+
+                resized_new_tensor = np.full(updated_size, -1e9)
+                resized_new_tensor[:layernorm_tensor.shape[0]] = layernorm_tensor
+
+                # Update the max tensor element-wise
+                updated_max_tensor = np.maximum(resized_current_max, resized_new_tensor)
+
+                # Update the file content
+                lines[existing_entry] = f"{layer_key}: {updated_max_tensor.tolist()}\n"
+            except Exception as e:
+                print(f"Error parsing tensor for {layer_key}: {e}")
+                return
+        else:
+            # LayerNorm entry doesn't exist; write new data
+            lines.append(f"{layer_key}: {layernorm_tensor.tolist()}\n")
+
+        # Write back
+        file.seek(0)
+        file.writelines(lines)
+        file.truncate()  # Ensure no extra data remains
+
+    # Increment and reset counter after 24
+    layernorm_counter = (layernorm_counter + 1) % 24
 
 class NewLayerNormReplace(nn.Module):
     def __init__(self, old_ln):
@@ -197,18 +252,7 @@ class NewLayerNormReplace(nn.Module):
 
         newton = newton_inv_sqrt(sqrt_input)
         # newton = ref_inv_sqrt(sqrt_input)
-        max_val = newton.max().item()
-        min_val = newton.min().item()
-        mean_val = newton.mean().item()
-
-        global_max = max(global_max, max_val)
-        global_min = min(global_min, min_val)
-        global_sum += mean_val
-        global_count += 1
-
-        with open(stats_file, "w") as f:
-            avg_mean = global_sum / global_count if global_count > 0 else 0.0
-            f.write(f"Global Max: {global_max}, Global Min: {global_min}, Global Mean: {avg_mean}\n")
+        update_layernorm_max(newton)
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
