@@ -155,7 +155,7 @@ class NewLayerNorm(nn.Module):
         # print("running approx layernorm")
         # Scales the variance down by SCALE_ROOT^2. Important to fit
         # in the required range
-        SCALE_ROOT = 40 #check
+        SCALE_ROOT = 30 #check
         #length = x.shape[-1]
         mean = x.mean(-1, keepdim=True)
 
@@ -173,7 +173,7 @@ class NewLayerNorm(nn.Module):
         # if torch.cuda.is_available():
         #     norm_tensor = norm_tensor.to('cuda')
         # layernorm_replace_counter = (layernorm_replace_counter + 1) % 24
-        newton = torch.full([1,x.shape[1],1],198.66920471191406, device= "cuda")
+        newton = torch.full([1,x.shape[1],1],14, device= "cuda")
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
