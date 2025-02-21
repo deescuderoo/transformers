@@ -182,6 +182,9 @@ def update_layernorm_max(layernorm_tensor):
     norm_index = (layernorm_counter % 2) + 1  # 1 or 2
     layer_key = f"layer_{layer_id}_{norm_index}"
 
+    if isinstance(layernorm_tensor, torch.Tensor):
+        layernorm_tensor = layernorm_tensor.detach().cpu().numpy()
+
     # Read the existing file
     with open(LAYERNORM_VALUES_FILE, 'r+') as file:
         lines = file.readlines()
