@@ -62,6 +62,13 @@ gelu_model = GPT2LMHeadModel.from_pretrained(gpt2, config=new_config)
 # First, we define the new layer normalization as a derived class from
 # nn.Module
 
+LAYERNORM_VALUES_FILE = "layernorm_max_tensors.txt"
+layernorm_counter = 0  # Tracks LayerNorm calls (0 to 23)
+# Check if the file exists
+if not os.path.exists(LAYERNORM_VALUES_FILE):
+    with open(LAYERNORM_VALUES_FILE, 'w') as file:
+        file.write("")  # Create an empty file if it doesn't exist
+
 
 class RefLayerNorm(nn.Module):
     '''
@@ -93,7 +100,9 @@ class RefLayerNorm(nn.Module):
         diff = x - mean
         var = (diff**2).sum(-1, keepdim=True) / length
         sqrt_input = var + self.eps
-        y = (diff / torch.sqrt(sqrt_input)) * self.weights + self.bias
+        sd = 1/torch.sqrt(sqrt_input)
+        update_layernorm_max(sd)
+        y = diff * sd * (self.weights + self.bias)
 
         # This is the rewrite from the non-interactive paper
         # z = length * (x - mean)
@@ -179,13 +188,6 @@ class NewLayerNorm(nn.Module):
 
         return y
 
-LAYERNORM_VALUES_FILE = "layernorm_max_tensors.txt"
-layernorm_counter = 0  # Tracks LayerNorm calls (0 to 23)
-
-# Check if the file exists
-if not os.path.exists(LAYERNORM_VALUES_FILE):
-    with open(LAYERNORM_VALUES_FILE, 'w') as file:
-        file.write("")  # Create an empty file if it doesn't exist
 
 def update_layernorm_max(layernorm_tensor):
     global layernorm_counter
@@ -285,7 +287,7 @@ class NewLayerNormReplace(nn.Module):
 
         newton = newton_inv_sqrt(sqrt_input)
         # newton = ref_inv_sqrt(sqrt_input)
-        update_layernorm_max(newton)
+        # update_layernorm_max(newton)
 
         y = diff * (newton) * self.weights / SCALE_ROOT + self.bias
 
@@ -313,8 +315,8 @@ gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_co
 
 mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 for block in mod_model.transformer.h:
-    block.ln_1 = NewLayerNorm(block.ln_1)
-    block.ln_2 = NewLayerNorm(block.ln_2)
+    block.ln_1 = RefLayerNorm(block.ln_1)
+    block.ln_2 = RefLayerNorm(block.ln_2)
 
 
 
