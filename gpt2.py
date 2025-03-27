@@ -289,7 +289,8 @@ tasks = [
     # "race"
     # "triviaqa",
     # "social_iqa"
-    "squad_completion"
+    # "squad_completion" --too long for gpt small
+    "glue:mnli"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
