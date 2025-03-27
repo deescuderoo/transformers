@@ -472,7 +472,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
 
     # norm: divide by length so that quotient is <1 (denominator
     # becomes the mean)
-    G_ITERATIONS = 19 #check
+    G_ITERATIONS = 14
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
         # print(f"Device: {normalizer.device}")
