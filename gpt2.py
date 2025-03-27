@@ -288,7 +288,8 @@ tasks = [
     # "piqa"
     # "race"
     # "triviaqa",
-    "social_iqa"
+    # "social_iqa"
+    "squad_completion"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
