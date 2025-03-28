@@ -292,7 +292,7 @@ tasks = [
     # "squad_completion" --too long for gpt small
     # "mnli"
     # "storycloze_2018"
-    "sst"
+    "sst2"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
