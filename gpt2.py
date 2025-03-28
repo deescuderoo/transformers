@@ -304,7 +304,7 @@ mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 
 from datasets import load_dataset
 load_dataset("social_i_qa", split="train", trust_remote_code=True)  # Pre-load dataset to ensure trust
-
+load_dataset("story_cloze", trust_remote_code=True)
 mod_results = lm_eval.simple_evaluate( # call simple_evaluate
     model=mod_model_lmeval,
     tasks=tasks,
