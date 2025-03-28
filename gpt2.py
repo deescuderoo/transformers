@@ -285,8 +285,8 @@ tasks = [
     # "wsc",
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
-    "piqa"
-    # "race"
+    # "piqa"
+    "race"
     # "triviaqa",
     # "social_iqa"
     # "squad_completion" --too long for gpt small
