@@ -282,7 +282,7 @@ tasks = [
     # "wikitext", -- not accurate
     # "glue",
     # "storycloze", -- needs custom dataset download
-    "wsc273"
+    # "wsc273"
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
     # "piqa"
@@ -292,6 +292,7 @@ tasks = [
     # "squad_completion" --too long for gpt small
     # "mnli"
     # "storycloze_2018"
+    "sst"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
