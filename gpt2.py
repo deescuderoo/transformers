@@ -288,9 +288,9 @@ tasks = [
     # "piqa"
     # "race"
     # "triviaqa",
-    # "social_iqa"
+    "social_iqa"
     # "squad_completion" --too long for gpt small
-    "mnli"
+    # "mnli"
     # "storycloze_2018"
     # "sst2"
     # "truthfulqa_mc1", --22 and 1
