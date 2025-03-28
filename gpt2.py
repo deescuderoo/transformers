@@ -294,8 +294,8 @@ tasks = [
     # "storycloze_2018"
     # "sst2"
     "truthfulqa_mc1",
-    "truthfulqa_mc2",
-    "truthfulqa_gen"
+    "truthfulqa_mc2"
+    # "truthfulqa_gen"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
