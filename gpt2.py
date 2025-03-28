@@ -303,7 +303,7 @@ if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
 mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 
 from datasets import load_dataset
-load_dataset("social_i_qa", split="train", trust_remote_code=True)  # Pre-load dataset to ensure trust
+#load_dataset("social_i_qa", split="train", trust_remote_code=True)  # Pre-load dataset to ensure trust
 load_dataset("story_cloze", "2018", trust_remote_code=True, data_dir="transformers/tests/storycloze")
 mod_results = lm_eval.simple_evaluate( # call simple_evaluate
     model=mod_model_lmeval,
