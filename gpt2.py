@@ -278,7 +278,7 @@ from lm_eval.models.huggingface import HFLM
 tasks = [
     # "lambada_openai",
     # "hellaswag"
-    # "arc_easy"
+    "arc_easy"
     # "wikitext", -- not accurate
     # "glue",
     # "storycloze", -- needs custom dataset download
@@ -290,7 +290,7 @@ tasks = [
     # "triviaqa",
     # "social_iqa"
     # "squad_completion" --too long for gpt small
-    "mnli"
+    # "mnli"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
