@@ -282,7 +282,7 @@ tasks = [
     # "wikitext", -- not accurate
     # "glue",
     # "storycloze", -- needs custom dataset download
-    "wsc273"
+    "wsc285"
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
     # "piqa"
@@ -305,7 +305,7 @@ mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 from datasets import load_dataset
 #load_dataset("social_i_qa", split="train", trust_remote_code=True)  # Pre-load dataset to ensure trust
 #load_dataset("story_cloze", "2018", trust_remote_code=True, data_dir="transformers/tests/storycloze")
-load_dataset("winograd_wsc", trust_remote_code=True)
+load_dataset("winograd_wsc", "wsc285", trust_remote_code=True)
 mod_results = lm_eval.simple_evaluate( # call simple_evaluate
     model=mod_model_lmeval,
     tasks=tasks,
