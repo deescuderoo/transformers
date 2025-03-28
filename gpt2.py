@@ -293,7 +293,7 @@ tasks = [
     # "mnli"
     # "storycloze_2018"
     # "sst2"
-    "truthfulqa_mc1",
+    # "truthfulqa_mc1",
     "truthfulqa_mc2"
     # "truthfulqa_gen"
         ]
