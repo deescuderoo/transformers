@@ -286,11 +286,12 @@ tasks = [
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
     # "piqa"
-    "race"
+    # "race"
     # "triviaqa",
     # "social_iqa"
     # "squad_completion" --too long for gpt small
     # "mnli"
+    "storycloze_2018"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
