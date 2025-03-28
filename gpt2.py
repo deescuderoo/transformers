@@ -290,7 +290,7 @@ tasks = [
     # "triviaqa",
     # "social_iqa"
     # "squad_completion" --too long for gpt small
-    # "mnli"
+    "mnli"
     # "storycloze_2018"
     # "sst2"
     # "truthfulqa_mc1", --22 and 1
@@ -303,7 +303,7 @@ tasks = [
     # "anli_r3"
     # "boolq"
     # "record" -- bad accuracy
-    "wic"
+    # "wic"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
