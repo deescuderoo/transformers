@@ -302,7 +302,8 @@ tasks = [
     # "anli_r2",
     # "anli_r3"
     # "boolq"
-    "record"
+    # "record" -- bad accuracy
+    "wic"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
