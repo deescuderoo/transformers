@@ -31,7 +31,7 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
-gpt2 = "gpt2-medium" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+gpt2 = "gpt2-large" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
 
 # This is the default GPT2 model from HF
 std_model = GPT2LMHeadModel.from_pretrained(gpt2)
@@ -285,14 +285,14 @@ tasks = [
     # "wsc273"
     # "lambada_cloze",
     # "lambada_standard_cloze_yaml" --nan,
-    # "piqa",
+    "piqa"
     # "race"
     # "triviaqa",
-    "social_iqa",
+    # "social_iqa",
     # "squad_completion" --too long for gpt small
-    "mnli",
+    # "mnli",
     # "storycloze_2018"
-    "sst2"
+    # "sst2"
     # "truthfulqa_mc1", --22 and 1
     # "truthfulqa_mc2" --nan
     # "truthfulqa_gen" -- too time taking
