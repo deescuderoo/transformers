@@ -188,7 +188,7 @@ def find_max_cycle():
             except ValueError:
                 continue
 
-testsuite = "piqa"
+testsuite = "race"
 
 def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
@@ -369,7 +369,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     global testsuite
     model_name = convert_model_name(model)
     tensor_name = f"tensors_{model_name}_{testsuite}"
-
+    print(tensor_name)
     # Access the tensor dictionary dynamically
     tensor_dict = globals().get(tensor_name)
     #maxes = torch.full((1,x.shape[1],x.shape[2],1),tensor_dict[layer_id])
@@ -402,7 +402,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
 
     # norm: divide by length so that quotient is <1 (denominator
     # becomes the mean)
-    G_ITERATIONS = 16
+    G_ITERATIONS = 7
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
         # print(f"Device: {normalizer.device}")
