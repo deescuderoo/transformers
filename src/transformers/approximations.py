@@ -324,7 +324,6 @@ def approx_softmax_without_max_replacement(x, layer_id, model, dim=None): #FINAL
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
     # assert(correct_maxes == maxes)
     maxes = torch.max(x, dim, keepdim=True)[0]
-    print("approx without max")
     EXP_ITERATIONS = 7
     x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
@@ -369,7 +368,6 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     global testsuite
     model_name = convert_model_name(model)
     tensor_name = f"tensors_{model_name}_{testsuite}"
-    print(tensor_name)
     # Access the tensor dictionary dynamically
     tensor_dict = globals().get(tensor_name)
     #maxes = torch.full((1,x.shape[1],x.shape[2],1),tensor_dict[layer_id])
@@ -378,7 +376,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
 
-    EXP_ITERATIONS = 5
+    EXP_ITERATIONS = 7
     x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
     # x_exp = torch.exp(x-maxes)
@@ -402,7 +400,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
 
     # norm: divide by length so that quotient is <1 (denominator
     # becomes the mean)
-    G_ITERATIONS = 5
+    G_ITERATIONS = 7
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
         # print(f"Device: {normalizer.device}")
