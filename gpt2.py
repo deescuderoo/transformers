@@ -278,7 +278,7 @@ from lm_eval.models.huggingface import HFLM
 tasks = [
     # "lambada_openai",
     # "hellaswag"
-    "arc_easy"
+    # "arc_easy"
     # "wikitext", -- not accurate
     # "glue",
     # "storycloze", -- needs custom dataset download
@@ -288,7 +288,7 @@ tasks = [
     # "piqa"
     # "race"
     # "triviaqa",
-    # "social_iqa"
+    "social_iqa"
     # "squad_completion" --too long for gpt small
     # "mnli",
     # "storycloze_2018"
