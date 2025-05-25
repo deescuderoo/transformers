@@ -3,9 +3,9 @@ import scipy.special
 import torch, os, ast
 import numpy as np
 import json
-from max_tensors.gpt2_medium_maxes import tensors_gpt2_medium_piqa, tensors_gpt2_medium_race
-from max_tensors.gpt2_maxes import tensors_gpt2_piqa, tensors_gpt2_wsc, tensors_gpt2_arc, max_constants_gpt2_arc, max_constants_gpt2_piqa, tensors_gpt2_race
-from max_tensors.gpt2_large_maxes import tensors_gpt2_large_piqa
+from .max_tensors.gpt2_medium_maxes import tensors_gpt2_medium_piqa, tensors_gpt2_medium_race
+from .max_tensors.gpt2_maxes import tensors_gpt2_piqa, tensors_gpt2_wsc, tensors_gpt2_arc, max_constants_gpt2_arc, max_constants_gpt2_piqa, tensors_gpt2_race
+from .max_tensors.gpt2_large_maxes import tensors_gpt2_large_piqa
 
 def compare_f(x, n):
     res = 0
