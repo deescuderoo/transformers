@@ -31,7 +31,7 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
-gpt2 = "gpt2" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+gpt2 = "gpt2-medium" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
 
 # This is the default GPT2 model from HF
 std_model = GPT2LMHeadModel.from_pretrained(gpt2)
