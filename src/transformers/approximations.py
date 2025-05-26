@@ -355,7 +355,6 @@ def analyze_approx_softmax(x, layer_id, model, dim=None):
     }
     with open(filename, "w") as f:
         json.dump(results, f, indent=2)
-    print(f"Saved analysis to {filename}")
     return approx
 
 def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
