@@ -351,8 +351,7 @@ def analyze_approx_softmax(x, layer_id, model, dim=None):
     results[f"layer_{layer_id}"] = {
         "MAE": (gt - approx).abs().mean().item(),
         "clipping_ratio": (approx == 0).float().mean().item(),
-        "shape": list(x.shape),
-        "input_hash": hash(x.numpy().tobytes())
+        "shape": list(x.shape)
     }
     with open(filename, "w") as f:
         json.dump(results, f, indent=2)
