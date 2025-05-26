@@ -3,6 +3,7 @@ import scipy.special
 import torch, os, ast
 import numpy as np
 import json
+from tqdm import tqdm
 from .max_tensors.gpt2_medium_maxes import tensors_gpt2_medium_piqa, tensors_gpt2_medium_race
 from .max_tensors.gpt2_maxes import tensors_gpt2_piqa, tensors_gpt2_wsc, tensors_gpt2_arc, max_constants_gpt2_arc, max_constants_gpt2_piqa, tensors_gpt2_race
 from .max_tensors.gpt2_large_maxes import tensors_gpt2_large_piqa
@@ -321,48 +322,44 @@ def approx_softmax_store_in_file(x, layer_id, model, dim=None):
     return out
 
 def approx_softmax_without_max_replacement(x, layer_id, model, dim=None): #FINAL FUNCTION WITHOUT MAX REPLACEMENT
-    # correct_maxes = torch.max(x, dim, keepdim=True)[0]
-    # assert(correct_maxes == maxes)
     maxes = torch.max(x, dim, keepdim=True)[0]
     EXP_ITERATIONS = 7
     x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
-    # x_exp = torch.exp(x-maxes)
 
     x_exp[x <= -3.4028e+37] = 0
-    # assert torch.all(x_exp <= 1)
-    # x_exp = torch.exp(x-maxes)
-    # x_exp = x_exp * mask
 
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
 
-    # return x_exp/x_exp_sum
-    # x_exp_sum = x_exp_sum * mask
-
-    # Division
-    # out = x_exp/x_exp_sum
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
-
-    # assert torch.all(x_exp_sum / normalizer <= 1)
-
-    # norm: divide by length so that quotient is <1 (denominator
-    # becomes the mean)
     G_ITERATIONS = 7
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
-        # print(f"Device: {normalizer.device}")
 
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
-    # out = out * mask  # Final masking for valid values
-    # Useful for handpicking initial approx.
-    # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
 
-def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
+def analyze_approx_softmax(x, layer_id, model, dim=None):
+    filename="softmax_errors.json"
+    results = {}
+    gt = approx_softmax_without_max_replacement(x, layer_id, model, dim=-1)
+    approx = approx_softmax(x, layer_id, model, dim=-1)
+    mae = (gt - approx).abs().mean().item()
+    clipping = (approx == 0).float().mean().item()
+    results[f"layer_{layer_id}"] = {
+        "MAE": (gt - approx).abs().mean().item(),
+        "clipping_ratio": (approx == 0).float().mean().item(),
+        "shape": list(x.shape),
+        "input_hash": hash(x.numpy().tobytes())
+    }
+    with open(filename, "w") as f:
+        json.dump(results, f, indent=2)
+    print(f"Saved analysis to {filename}")
+    return approx
 
-    # correct_maxes = torch.max(x, dim, keepdim=True)[0]
+def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
     global testsuite
     model_name = convert_model_name(model)
     tensor_name = f"tensors_{model_name}_{testsuite}"
@@ -371,21 +368,16 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     maxes = maxes[:, :, :x.shape[2], :] * (1.5)
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
-
     EXP_ITERATIONS = 9
     x_diff = x - maxes # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
-
     x_exp[x <= -3.4028e+37] = 0
-
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
-
     G_ITERATIONS = 18
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
-
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
     return out
