@@ -372,7 +372,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
 
-    EXP_ITERATIONS = 100
+    EXP_ITERATIONS = 50
     x_diff = x - maxes # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
 
