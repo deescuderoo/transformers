@@ -343,11 +343,13 @@ def approx_softmax_without_max_replacement(x, layer_id, model, dim=None): #FINAL
 
 def analyze_approx_softmax(x, layer_id, model, dim=None):
     filename="softmax_errors.json"
-    results = {}
+    if os.path.exists(filename):
+        with open(filename, "r") as f:
+            results = json.load(f)
+    else:
+        results = {}
     gt = approx_softmax_without_max_replacement(x, layer_id, model, dim=-1)
     approx = approx_softmax(x, layer_id, model, dim=-1)
-    mae = (gt - approx).abs().mean().item()
-    clipping = (approx == 0).float().mean().item()
     results[f"layer_{layer_id}"] = {
         "MAE": (gt - approx).abs().mean().item(),
         "clipping_ratio": (approx == 0).float().mean().item(),
