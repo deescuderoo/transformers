@@ -368,8 +368,8 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     maxes = maxes[:, :, :x.shape[2], :] * 1.5
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
-    EXP_ITERATIONS = 12
-    x_diff = x - maxes # Prevent extreme negatives
+    EXP_ITERATIONS = 10
+    x_diff = x - maxes.clamp(min=-100, max=100)
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
     x_exp[x <= -3.4028e+37] = 0
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
