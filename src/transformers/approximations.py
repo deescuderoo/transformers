@@ -361,53 +361,31 @@ def approx_softmax_without_max_replacement(x, layer_id, model, dim=None): #FINAL
     return out
 
 def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
+
     # correct_maxes = torch.max(x, dim, keepdim=True)[0]
-    # assert(correct_maxes == maxes)
-    # maxes = tensors5[layer_id]
-    # maxes = maxes[:, :, :x.shape[2], :]  #wsc best accuracy
     global testsuite
     model_name = convert_model_name(model)
     tensor_name = f"tensors_{model_name}_{testsuite}"
-    # Access the tensor dictionary dynamically
     tensor_dict = globals().get(tensor_name)
-    #maxes = torch.full((1,x.shape[1],x.shape[2],1),tensor_dict[layer_id])
     maxes = tensor_dict[layer_id]
     maxes = maxes[:, :, :x.shape[2], :]
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
 
     EXP_ITERATIONS = 7
-    x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
+    x_diff = x - maxes # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
-    # x_exp = torch.exp(x-maxes)
 
     x_exp[x <= -3.4028e+37] = 0
-    # assert torch.all(x_exp <= 1)
-    # x_exp = torch.exp(x-maxes)
-    # x_exp = x_exp * mask
 
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
-
-    # return x_exp/x_exp_sum
-    # x_exp_sum = x_exp_sum * mask
-
-    # Division
-    # out = x_exp/x_exp_sum
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
 
-    # assert torch.all(x_exp_sum / normalizer <= 1)
-
-    # norm: divide by length so that quotient is <1 (denominator
-    # becomes the mean)
-    G_ITERATIONS = 14
+    G_ITERATIONS = 7
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
-        # print(f"Device: {normalizer.device}")
 
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
-    # out = out * mask  # Final masking for valid values
-    # Useful for handpicking initial approx.
-    # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
