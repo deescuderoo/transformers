@@ -365,21 +365,11 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     tensor_name = f"tensors_{model_name}_{testsuite}"
     tensor_dict = globals().get(tensor_name)
     maxes = tensor_dict[layer_id]
-    scale_factor = {
-        3: 1.1, 4: 1.1,
-        11: 1.3, 23: 1.3,
-    }.get(layer_id, 1.5)
-    maxes = maxes[:, :, :x.shape[2], :] * scale_factor
+    maxes = maxes[:, :, :x.shape[2], :] * 1.5
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
     x_diff = x- maxes
-    min_diff = x_diff.min().item()
-    if min_diff < -20:
-        EXP_ITERATIONS = 16
-    elif min_diff < -10:
-        EXP_ITERATIONS = 14
-    else:
-        EXP_ITERATIONS = 10
+    EXP_ITERATIONS = 14 if layer_id in [3, 4] else 10
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
     x_exp[x <= -3.4028e+37] = 0
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
