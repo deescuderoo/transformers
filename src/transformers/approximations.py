@@ -189,7 +189,7 @@ def find_max_cycle():
             except ValueError:
                 continue
 
-testsuite = "race"
+testsuite = "piqa"
 
 def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
