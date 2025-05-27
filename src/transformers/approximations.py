@@ -2,6 +2,7 @@ from math import ceil, log2
 import scipy.special
 import torch, os
 import numpy as np
+from .max_tensors.gpt2_maxes import tensors_gpt2
 
 def compare_f(x, n):
     res = 0
