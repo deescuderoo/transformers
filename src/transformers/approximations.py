@@ -371,7 +371,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     x_diff = x- maxes
     EXP_ITERATIONS = 10
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
-    x_exp = torch.where(x_diff < -15, torch.zeros_like(x_exp), x_exp)
+    x_exp[x <= -3.4028e+37] = 0
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
