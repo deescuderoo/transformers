@@ -178,13 +178,13 @@ class NewLayerNorm(nn.Module):
 refln_model = GPT2LMHeadModel.from_pretrained(gpt2)
 gelu_aprxln_model = GPT2LMHeadModel.from_pretrained(gpt2, config=new_config)
 
-#for block in refln_model.transformer.h:
-#    block.ln_1 = RefLayerNorm(block.ln_1)
-#    block.ln_2 = RefLayerNorm(block.ln_2)
+for block in refln_model.transformer.h:
+   block.ln_1 = RefLayerNorm(block.ln_1)
+   block.ln_2 = RefLayerNorm(block.ln_2)
 
-#for block in gelu_aprxln_model.transformer.h:
-#    block.ln_1 = NewLayerNorm(block.ln_1)
-#    block.ln_2 = NewLayerNorm(block.ln_2)
+for block in gelu_aprxln_model.transformer.h:
+   block.ln_1 = NewLayerNorm(block.ln_1)
+   block.ln_2 = NewLayerNorm(block.ln_2)
 
 
 gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)

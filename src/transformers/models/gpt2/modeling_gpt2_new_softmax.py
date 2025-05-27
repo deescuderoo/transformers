@@ -260,7 +260,6 @@ class GPT2Attention(nn.Module):
         if attention_mask is not None:
             # Apply the attention mask
             attn_weights = attn_weights + attention_mask
-        print("approx-softmax 2")
         attn_weights = nn.functional.softmax(attn_weights, dim=-1)
 
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op if otherwise
