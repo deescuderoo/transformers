@@ -31,7 +31,7 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
-gpt2 = "gpt2-large" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+gpt2 = "gpt2" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
 
 # This is the default GPT2 model from HF
 std_model = GPT2LMHeadModel.from_pretrained(gpt2)
@@ -125,7 +125,7 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 18
+    NEWTON_ITERATIONS = 16
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -233,25 +233,25 @@ std_generated_text = tokenizer.decode(std_output[0], skip_special_tokens=True)
 print("------------------------------------------\n")
 print(f"std output:\n{std_generated_text}")
 
-#gelu_output = gelu_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-#gelu_generated_text = tokenizer.decode(gelu_output[0], skip_special_tokens=True)
-#print("------------------------------------------\n")
-#print(f"gelu output:\n{gelu_generated_text}")
+gelu_output = gelu_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+gelu_generated_text = tokenizer.decode(gelu_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"gelu output:\n{gelu_generated_text}")
 
-#refln_output = refln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-#refln_generated_text = tokenizer.decode(refln_output[0], skip_special_tokens=True)
-#print("------------------------------------------\n")
-#print(f"refln output:\n{refln_generated_text}")
+refln_output = refln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+refln_generated_text = tokenizer.decode(refln_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"refln output:\n{refln_generated_text}")
 
-#gelu_aprxln_output = gelu_aprxln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-#gelu_aprxln_generated_text = tokenizer.decode(gelu_aprxln_output[0], skip_special_tokens=True)
-#print("------------------------------------------\n")
-#print(f"gelu_aprxln output:\n{gelu_aprxln_generated_text}")
+gelu_aprxln_output = gelu_aprxln_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+gelu_aprxln_generated_text = tokenizer.decode(gelu_aprxln_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"gelu_aprxln output:\n{gelu_aprxln_generated_text}")
 
-#gelu_stdln_aprxsm_output = gelu_stdln_aprxsm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
-#gelu_stdln_aprxsm_generated_text = tokenizer.decode(gelu_stdln_aprxsm_output[0], skip_special_tokens=True)
-#print("------------------------------------------\n")
-#print(f"gelu_stdln_aprxsm output:\n{gelu_stdln_aprxsm_generated_text}")
+gelu_stdln_aprxsm_output = gelu_stdln_aprxsm_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
+gelu_stdln_aprxsm_generated_text = tokenizer.decode(gelu_stdln_aprxsm_output[0], skip_special_tokens=True)
+print("------------------------------------------\n")
+print(f"gelu_stdln_aprxsm output:\n{gelu_stdln_aprxsm_generated_text}")
 
 mod_output = mod_model.generate(input_ids, max_length=100, num_return_sequences=1, pad_token_id=tokenizer.eos_token_id)
 mod_generated_text = tokenizer.decode(mod_output[0], skip_special_tokens=True)
@@ -276,34 +276,16 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
-    # "lambada_openai",
-    # "hellaswag"
-    # "arc_easy"
-    # "wikitext", -- not accurate
-    # "glue",
-    # "storycloze", -- needs custom dataset download
-    # "wsc273"
-    # "lambada_cloze",
-    # "lambada_standard_cloze_yaml" --nan,
-    "piqa"
-    # "race"
-    # "triviaqa",
-    # "social_iqa"
-    # "squad_completion" --too long for gpt small
-    # "mnli",
-    # "storycloze_2018"
-    # "sst2"
-    # "truthfulqa_mc1", --22 and 1
-    # "truthfulqa_mc2" --nan
-    # "truthfulqa_gen" -- too time taking
-    # "openbookqa"
-    # "nq_open" -- too time taking
-    # "anli_r1",
-    # "anli_r2",
-    # "anli_r3"
-    # "boolq"
-    # "record" -- bad accuracy
-    # "wic"
+    "hellaswag",
+    "arc_easy",
+    "piqa",
+    "social_iqa",
+    "mnli",
+    "sst2",
+    "anli_r1",
+    "anli_r2",
+    "anli_r3",
+    "wic"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
@@ -315,9 +297,7 @@ if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
 mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 
 from datasets import load_dataset
-#load_dataset("social_i_qa", split="train", trust_remote_code=True)  # Pre-load dataset to ensure trust
-#load_dataset("story_cloze", "2018", trust_remote_code=True, data_dir="transformers/tests/storycloze")
-load_dataset("winograd_wsc", "wsc273", trust_remote_code=True)
+load_dataset("social_i_qa", split="train", trust_remote_code=True)
 mod_results = lm_eval.simple_evaluate( # call simple_evaluate
     model=mod_model_lmeval,
     tasks=tasks,

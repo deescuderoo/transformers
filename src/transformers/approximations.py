@@ -1,12 +1,7 @@
-from math import ceil, tanh, log2, sqrt, pi
+from math import ceil, log2
 import scipy.special
-import torch, os, ast
+import torch, os
 import numpy as np
-import json
-from tqdm import tqdm
-from .max_tensors.gpt2_medium_maxes import tensors_gpt2_medium_piqa, tensors_gpt2_medium_race
-from .max_tensors.gpt2_maxes import tensors_gpt2_piqa, tensors_gpt2_wsc, tensors_gpt2_arc, max_constants_gpt2_arc, max_constants_gpt2_piqa, tensors_gpt2_race
-from .max_tensors.gpt2_large_maxes import tensors_gpt2_large_piqa
 
 def compare_f(x, n):
     res = 0
@@ -161,36 +156,6 @@ def approx_div(x, y, n):
 
     return N
 
-# Initialize the global variable
-current_cycle = 0  # Default value is now 0
-
-# Global variables
-OUTPUT_FOLDER = "output_cycles"
-LAYER_MAX_VALUES_FILE = os.path.join(OUTPUT_FOLDER, "layer_max_values.txt")
-SHAPE_MISMATCH_FILE = os.path.join(OUTPUT_FOLDER, "shape_mismatch_log.txt")
-
-# Ensure the folder exists
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-
-# Initialize the max values file if not already present
-if not os.path.exists(LAYER_MAX_VALUES_FILE):
-    with open(LAYER_MAX_VALUES_FILE, 'w') as file:
-        for layer_id in range(12):  # Assuming 12 layers
-            file.write(f"Layer {layer_id}: {[-10000] * 12}\n")  # Use -10000
-
-def find_max_cycle():
-    global current_cycle
-    max_cycle = 0
-    for filename in os.listdir(OUTPUT_FOLDER):
-        if filename.startswith("output_max_cycle_") and filename.endswith(".txt"):
-            try:
-                cycle_number = int(filename.split("_")[-1].split(".")[0])
-                max_cycle = max(max_cycle, cycle_number)
-            except ValueError:
-                continue
-
-testsuite = "piqa"
-
 def ref_softmax(x, dim=None):
     # x[x <= -3.4028e+37] = 0
     # print("input shape", x.shape)
@@ -199,80 +164,51 @@ def ref_softmax(x, dim=None):
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     return x_exp/x_exp_sum
 
-MAX_VALUES_FILE = "layer_max_tensors_gpt2_medium_arc.txt"
-
-# Global file path for fallback logs
-FALLBACK_LOG_FILE = "fallback_counts_log.txt"
-
-# Initialize fallback log file
-with open(FALLBACK_LOG_FILE, 'w') as file:
-    file.write("Fallback counts per layer:\n")
-    for layer_id in range(12):  # Assuming 12 layers
-        file.write(f"Layer {layer_id}: 0 fallbacks\n")
-
-# Global counter to track fallback usage per layer
-fallback_counter = [0] * 12  # Assuming 12 layers per input
-
-# Ensure the folder exists
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-
 def convert_model_name(model_name):
     return model_name.replace("-", "_")
 
-def approx_softmax_store_in_file(x, layer_id, model, dim=None):
+def approx_softmax_store_max_of_maxes_in_file(x, layer_id, model, dim=None): #FUNCTION TO STORE MAX OF MAXES FOR REPLACEMENT
     # Get max values along the specified dimension
     if torch.isnan(x).any():
         print(f"Warning: NaN detected in input tensor at layer {layer_id} for model {model}")
-
     # Get max values
     maxes = torch.max(x, dim, keepdim=True)[0]  # Shape: [1, 12, W, 1]
     maxes_reshaped = maxes.squeeze(0).squeeze(-1).cpu().numpy()  # Shape: [12, W]
-
-    MAX_VALUES_FILE = f"layer_max_tensors_{model}_race.txt"
-
+    MAX_VALUES_FILE = f"layer_max_tensors_{model}.txt"
     # Check if the file exists
     if not os.path.exists(MAX_VALUES_FILE):
         with open(MAX_VALUES_FILE, 'w') as file:
             file.write("")  # Create an empty file if it doesn't exist
-
     with open(MAX_VALUES_FILE, 'r+') as file:
         lines = file.readlines()
-
         # Check if the layer already has data
         layer_header = f"Layer {layer_id}:\n"
         if layer_header in lines:
             start_idx = lines.index(layer_header) + 1
             size_idx = start_idx
             tensor_idx = start_idx + 1
-
             # Load size safely
             try:
                 current_size = eval(lines[size_idx].split(":")[1].strip())
             except Exception as e:
                 print(f"Error parsing size for layer {layer_id}: {e}")
                 return
-
             # Load tensor safely
             try:
                 current_max_tensor = np.array(eval(lines[tensor_idx].strip().replace("nan", "float('nan')")))
             except Exception as e:
                 print(f"Error parsing tensor for layer {layer_id}: {e}")
                 return
-
             # Handle size mismatch
             updated_size = (max(current_size[0], maxes_reshaped.shape[0]),
                             max(current_size[1], maxes_reshaped.shape[1]))
-
             # Initialize tensors safely
             resized_current_max_tensor = np.full(updated_size, -1e9)  # Large negative instead of -inf
             resized_current_max_tensor[:current_size[0], :current_size[1]] = current_max_tensor
-
             resized_maxes_reshaped = np.full(updated_size, -1e9)
             resized_maxes_reshaped[:maxes_reshaped.shape[0], :maxes_reshaped.shape[1]] = maxes_reshaped
-
             # Update the max tensor element-wise
             updated_max_tensor = np.maximum(resized_current_max_tensor, resized_maxes_reshaped)
-
             # Update the file content
             lines[size_idx] = f"Size: {updated_size}\n"
             lines[tensor_idx] = f"{updated_max_tensor.tolist()}\n"
@@ -284,98 +220,54 @@ def approx_softmax_store_in_file(x, layer_id, model, dim=None):
                 f"Size: {updated_size}\n",
                 f"{maxes_reshaped.tolist()}\n\n"
             ])
-
         # Write back
         file.seek(0)
         file.writelines(lines)
-
     # Perform the rest of the softmax approximation as usual
     EXP_ITERATIONS = 7
     x_exp = approx_exp(x-maxes, EXP_ITERATIONS)
-    # x_exp = torch.exp(x-maxes)
     x_exp[x <= -3.4028e+37] = 0
-    # assert torch.all(x_exp <= 1)
-    # x_exp = torch.exp(x-maxes)
-
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
-
-    # return x_exp/x_exp_sum
-
-    # Division
-    # out = x_exp/x_exp_sum
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
-
-    # assert torch.all(x_exp_sum / normalizer <= 1)
-
-    # norm: divide by length so that quotient is <1 (denominator
-    # becomes the mean)
     G_ITERATIONS = 7
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
-        # print(f"Device: {normalizer.device}")
-
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
-
-    # Useful for handpicking initial approx.
-    # print((1/torch.mean(x_exp, dim, keepdim=True)).mean())
     return out
 
 def approx_softmax_without_max_replacement(x, layer_id, model, dim=None): #FINAL FUNCTION WITHOUT MAX REPLACEMENT
     maxes = torch.max(x, dim, keepdim=True)[0]
     EXP_ITERATIONS = 7
-    x_diff = (x - maxes).clamp(min=-100, max=100)  # Prevent extreme negatives
+    x_diff = x - maxes  # Prevent extreme negatives
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
-
     x_exp[x <= -3.4028e+37] = 0
-
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
-
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
     G_ITERATIONS = 7
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
-
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,
                      G_ITERATIONS)
     return out
 
-def analyze_approx_softmax(x, layer_id, model, dim=None):
-    filename="softmax_errors.json"
-    if os.path.exists(filename):
-        with open(filename, "r") as f:
-            results = json.load(f)
-    else:
-        results = {}
-    gt = approx_softmax_without_max_replacement(x, layer_id, model, dim=-1)
-    approx = approx_softmax(x, layer_id, model, dim=-1)
-    results[f"layer_{layer_id}"] = {
-        "MAE": (gt - approx).abs().mean().item(),
-        "clipping_ratio": (approx == 0).float().mean().item(),
-        "shape": list(x.shape)
-    }
-    with open(filename, "w") as f:
-        json.dump(results, f, indent=2)
-    return approx
-
 def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPROXIMATIONS
-    global testsuite
     model_name = convert_model_name(model)
-    tensor_name = f"tensors_{model_name}_{testsuite}"
+    tensor_name = f"tensors_{model_name}"
     tensor_dict = globals().get(tensor_name)
     maxes = tensor_dict[layer_id]
-    maxes = maxes[:, :, :x.shape[2], :] * 1.6
+    maxes = maxes[:, :, :x.shape[2], :]
     if torch.cuda.is_available():
              maxes = maxes.to('cuda')
     x_diff = x- maxes
-    EXP_ITERATIONS = 14
+    EXP_ITERATIONS = 7
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
     x_exp[x <= -3.4028e+37] = 0
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
-    G_ITERATIONS = 24
+    G_ITERATIONS = 14
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,

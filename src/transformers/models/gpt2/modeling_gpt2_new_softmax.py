@@ -48,7 +48,7 @@ from ...utils import (
 from ...utils.model_parallel_utils import assert_device_map, get_device_map
 from .configuration_gpt2 import GPT2Config
 
-from ...approximations import approx_softmax, approx_softmax_store_in_file, approx_softmax_without_max_replacement, analyze_approx_softmax
+from ...approximations import approx_softmax, approx_softmax_store_max_of_maxes_in_file, approx_softmax_without_max_replacement
 
 
 logger = logging.get_logger(__name__)
@@ -211,7 +211,7 @@ class GPT2Attention(nn.Module):
         # attn_weights = nn.functional.softmax(attn_weights, dim=-1)
         # DANIEL: MODIFICATIONS HERE
         # attn_weights = interm_softmax(attn_weights, self.layer_idx, dim=-1)
-        attn_weights = analyze_approx_softmax(attn_weights, self.layer_idx, self.config._name_or_path, dim=-1)
+        attn_weights = approx_softmax(attn_weights, self.layer_idx, self.config._name_or_path, dim=-1)
         # print(f"MAX:\n {torch.max(attn_weights)}")
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
         attn_weights = attn_weights.type(value.dtype)
