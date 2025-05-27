@@ -242,7 +242,7 @@ def approx_softmax_store_max_of_maxes_in_file(x, layer_id, model, dim=None): #FU
 def approx_softmax_without_max_replacement(x, layer_id, model, dim=None): #FINAL FUNCTION WITHOUT MAX REPLACEMENT
     maxes = torch.max(x, dim, keepdim=True)[0]
     EXP_ITERATIONS = 7
-    x_diff = x - maxes  # Prevent extreme negatives
+    x_diff = x - maxes
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
     x_exp[x <= -3.4028e+37] = 0
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
