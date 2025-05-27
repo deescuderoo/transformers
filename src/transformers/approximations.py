@@ -3,6 +3,8 @@ import scipy.special
 import torch, os
 import numpy as np
 from .max_tensors.gpt2_maxes import tensors_gpt2
+from .max_tensors.gpt2_medium_maxes import tensors_gpt2_medium
+from .max_tensors.gpt2_large_maxes import tensors_gpt2_large
 
 def compare_f(x, n):
     res = 0
