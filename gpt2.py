@@ -31,7 +31,7 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
-gpt2 = "gpt2-large" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+gpt2 = "gpt2-medium" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
 
 # This is the default GPT2 model from HF
 std_model = GPT2LMHeadModel.from_pretrained(gpt2)
@@ -277,8 +277,8 @@ from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
     "hellaswag",
-    # "arc_easy",
-    # "piqa"
+    "arc_easy",
+    "piqa",
     "social_iqa",
     "mnli",
     "sst2",
