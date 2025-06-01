@@ -277,8 +277,8 @@ from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
     # "hellaswag",
-    # "arc_easy",
-    "piqa"
+    "arc_easy"
+    # "piqa"
     # "social_iqa",
     # "mnli",
     # "sst2",
