@@ -276,16 +276,16 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
-    # "hellaswag",
-    "arc_easy"
+    "hellaswag",
+    # "arc_easy",
     # "piqa"
-    # "social_iqa",
-    # "mnli",
-    # "sst2",
-    # "anli_r1",
-    # "anli_r2",
-    # "anli_r3",
-    # "wic"
+    "social_iqa",
+    "mnli",
+    "sst2",
+    "anli_r1",
+    "anli_r2",
+    "anli_r3",
+    "wic"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
