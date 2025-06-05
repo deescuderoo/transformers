@@ -269,7 +269,7 @@ def approx_softmax(x, layer_id, model, dim=None): #FINAL FUNCTION WITH ALL APPRO
     x_exp[x <= -3.4028e+37] = 0
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
-    G_ITERATIONS = 14 #small = 14, medium = 18, large = 22
+    G_ITERATIONS = 18 #small = 14, medium = 18, large = 22
     if torch.cuda.is_available():
         normalizer = normalizer.to('cuda')
     out = approx_div(x_exp / normalizer, x_exp_sum / normalizer,

@@ -31,7 +31,7 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
-gpt2 = "gpt2" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+gpt2 = "gpt2-medium" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
 
 # This is the default GPT2 model from HF
 std_model = GPT2LMHeadModel.from_pretrained(gpt2)
@@ -125,7 +125,7 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 16 #small=16, #medium, large=18
+    NEWTON_ITERATIONS = 18 #small=16, #medium, large=18
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
@@ -276,16 +276,16 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
-    "hellaswag",
-    "arc_easy",
-    "piqa",
-    "social_iqa",
-    "mnli",
-    "sst2",
-    "anli_r1",
-    "anli_r2",
-    "anli_r3",
-    "wic"
+    # "hellaswag",
+    # "arc_easy",
+    "piqa"
+    # "social_iqa",
+    # "mnli",
+    # "sst2",
+    # "anli_r1",
+    # "anli_r2",
+    # "anli_r3",
+    # "wic"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
