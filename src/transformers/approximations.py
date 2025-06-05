@@ -246,7 +246,6 @@ def approx_softmax_without_max_replacement(x, layer_id, model, dim=None): #FINAL
     x_exp = approx_exp(x_diff, EXP_ITERATIONS)
     x_exp[x <= -3.4028e+37] = 0
     x_exp_sum = torch.sum(x_exp, dim, keepdim=True)
-    x_exp_sum = torch.clamp(x_exp_sum, min=1e-12)
     normalizer = torch.ones(x_exp.shape).sum(dim, keepdim=True)
     G_ITERATIONS = 7
     if torch.cuda.is_available():
