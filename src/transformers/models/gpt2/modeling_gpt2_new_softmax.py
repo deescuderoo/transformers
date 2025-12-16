@@ -48,7 +48,7 @@ from ...utils import (
 from ...utils.model_parallel_utils import assert_device_map, get_device_map
 from .configuration_gpt2 import GPT2Config
 
-from ...approximations import approx_softmax
+from ...approximations import approx_softmax, approx_softmax_store_max_of_maxes_in_file, approx_softmax_without_max_replacement
 
 
 logger = logging.get_logger(__name__)
@@ -152,6 +152,7 @@ class GPT2Attention(nn.Module):
         # Layer-wise attention scaling, reordering, and upcasting
         self.scale_attn_by_inverse_layer_idx = config.scale_attn_by_inverse_layer_idx
         self.layer_idx = layer_idx
+        self.config= config
         self.reorder_and_upcast_attn = config.reorder_and_upcast_attn
 
         if self.is_cross_attention:
@@ -209,9 +210,9 @@ class GPT2Attention(nn.Module):
 
         # attn_weights = nn.functional.softmax(attn_weights, dim=-1)
         # DANIEL: MODIFICATIONS HERE
-        attn_weights = approx_softmax(attn_weights, dim=-1)
+        # attn_weights = interm_softmax(attn_weights, self.layer_idx, dim=-1)
+        attn_weights = approx_softmax(attn_weights, self.layer_idx, self.config._name_or_path, dim=-1)
         # print(f"MAX:\n {torch.max(attn_weights)}")
-
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op otherwise
         attn_weights = attn_weights.type(value.dtype)
         attn_weights = self.attn_dropout(attn_weights)
@@ -259,7 +260,6 @@ class GPT2Attention(nn.Module):
         if attention_mask is not None:
             # Apply the attention mask
             attn_weights = attn_weights + attention_mask
-
         attn_weights = nn.functional.softmax(attn_weights, dim=-1)
 
         # Downcast (if necessary) back to V's dtype (if in mixed-precision) -- No-Op if otherwise

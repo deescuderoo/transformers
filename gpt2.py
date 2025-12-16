@@ -31,8 +31,10 @@ from transformers import GPT2LMHeadModelNew
 
 configuration = GPT2Config()
 
+gpt2 = "gpt2-large" # "gpt2-xl" "gpt2" "gpt-large" "gpt2-medium"
+
 # This is the default GPT2 model from HF
-std_model = GPT2LMHeadModel.from_pretrained('gpt2')
+std_model = GPT2LMHeadModel.from_pretrained(gpt2)
 
 '''
 The GPT2LMHeadModel class is a subclass of GPT2 that includes a
@@ -43,8 +45,7 @@ model to generate probability distributions over the vocabulary for
 the next token in the sequence.
 '''
 
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-
+tokenizer = GPT2Tokenizer.from_pretrained(gpt2)
 
 # CHANGING ACTIVATIONS
 # This is the easiest one: one can instantiate a pretrained model and
@@ -52,8 +53,8 @@ tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 # name was added to the file
 # ./src/transformers/activations.py See that file for details
 
-new_config = GPT2Config.from_pretrained("gpt2", activation_function="gelu_puma")
-gelu_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+new_config = GPT2Config.from_pretrained(gpt2, activation_function="gelu_puma")
+gelu_model = GPT2LMHeadModel.from_pretrained(gpt2, config=new_config)
 
 # CHANGING LAYER NORMALIZATION
 
@@ -124,20 +125,21 @@ def newton_inv_sqrt(x):
     '''
     Newton approximation for 1/sqrt(x)
     '''
-    NEWTON_ITERATIONS = 16
+    NEWTON_ITERATIONS = 18 #small=16, #medium=18, large=18
     # Initial estimate
     y = initial_inv_sqrt(x)
     # Iterations
     for _ in range(NEWTON_ITERATIONS):
         y = (y * (3 - x * y**2)) / 2
     return y
+    # return 1/torch.sqrt(x)
 
 
 def ref_inv_sqrt(x):
     '''
     Reference implementation of 1/sqrt(x) for comparison
     '''
-    return 1/np.sqrt(x)
+    return 1/torch.sqrt(x)
 
 
 class NewLayerNorm(nn.Module):
@@ -173,21 +175,21 @@ class NewLayerNorm(nn.Module):
 # which is a ModuleList with the two layers that comprise
 # the feed forward block of the architecture.
 
-refln_model = GPT2LMHeadModel.from_pretrained("gpt2")
-gelu_aprxln_model = GPT2LMHeadModel.from_pretrained("gpt2", config=new_config)
+refln_model = GPT2LMHeadModel.from_pretrained(gpt2)
+gelu_aprxln_model = GPT2LMHeadModel.from_pretrained(gpt2, config=new_config)
 
 for block in refln_model.transformer.h:
-    block.ln_1 = RefLayerNorm(block.ln_1)
-    block.ln_2 = RefLayerNorm(block.ln_2)
+   block.ln_1 = RefLayerNorm(block.ln_1)
+   block.ln_2 = RefLayerNorm(block.ln_2)
 
 for block in gelu_aprxln_model.transformer.h:
-    block.ln_1 = NewLayerNorm(block.ln_1)
-    block.ln_2 = NewLayerNorm(block.ln_2)
+   block.ln_1 = NewLayerNorm(block.ln_1)
+   block.ln_2 = NewLayerNorm(block.ln_2)
 
 
-gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
+gelu_stdln_aprxsm_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 
-mod_model = GPT2LMHeadModelNew.from_pretrained("gpt2", config=new_config)
+mod_model = GPT2LMHeadModelNew.from_pretrained(gpt2, config=new_config)
 for block in mod_model.transformer.h:
     block.ln_1 = NewLayerNorm(block.ln_1)
     block.ln_2 = NewLayerNorm(block.ln_2)
@@ -274,11 +276,16 @@ import lm_eval
 from lm_eval.models.huggingface import HFLM
 # Uncomment the desired tasks
 tasks = [
-    "lambada_openai",
     "hellaswag",
     "arc_easy",
-    # "wikitext",
-    # "glue"
+    "piqa",
+    "social_iqa",
+    "mnli",
+    "sst2",
+    "anli_r1",
+    "anli_r2",
+    "anli_r3",
+    "wic"
         ]
 batch_size = 8
 task_manager = lm_eval.tasks.TaskManager()
@@ -289,6 +296,8 @@ mod_model_lmeval = mod_model
 if torch.cuda.is_available(): mod_model_lmeval.to('cuda')
 mod_model_lmeval = HFLM(pretrained=mod_model_lmeval)
 
+from datasets import load_dataset
+load_dataset("social_i_qa", split="train", trust_remote_code=True)
 mod_results = lm_eval.simple_evaluate( # call simple_evaluate
     model=mod_model_lmeval,
     tasks=tasks,
